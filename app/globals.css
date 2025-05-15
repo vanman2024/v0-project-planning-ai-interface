@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Markdown Styling */
+.prose {
+  @apply text-foreground;
+  max-width: 65ch;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.prose a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80;
+  font-weight: 500;
+}
+
+.prose strong {
+  @apply font-bold;
+  color: inherit;
+}
+
+.prose ol {
+  @apply pl-6 my-6;
+  counter-reset: list-counter;
+}
+
+.prose ol > li {
+  @apply relative pl-2;
+  counter-increment: list-counter;
+}
+
+.prose ol > li::before {
+  @apply text-muted-foreground absolute left-0 -translate-x-full pr-2;
+  content: counter(list-counter) ".";
+}
+
+.prose ul {
+  @apply pl-6 my-6 list-disc;
+}
+
+.prose ul > li {
+  @apply relative pl-2;
+}
+
+.prose h1 {
+  @apply text-3xl font-bold tracking-tight mt-8 mb-4;
+  color: inherit;
+}
+
+.prose h2 {
+  @apply text-2xl font-semibold tracking-tight mt-10 mb-4;
+  color: inherit;
+}
+
+.prose h3 {
+  @apply text-xl font-semibold tracking-tight mt-8 mb-4;
+  color: inherit;
+}
+
+.prose h4 {
+  @apply text-lg font-semibold tracking-tight mt-8 mb-4;
+  color: inherit;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-muted pl-4 italic my-6;
+  color: inherit;
+}
+
+.prose img {
+  @apply my-8 rounded-md;
+  max-width: 100%;
+}
+
+.prose hr {
+  @apply border-border my-8;
+}
+
+.prose pre {
+  @apply bg-muted p-4 rounded-md overflow-x-auto my-6;
+  font-size: 0.875em;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0 text-sm;
+  color: inherit;
+}
+
+.prose table {
+  @apply w-full my-6 border-collapse;
+}
+
+.prose thead {
+  @apply bg-muted;
+}
+
+.prose thead th {
+  @apply p-2 text-left font-semibold;
+}
+
+.prose tbody tr {
+  @apply border-b border-border;
+}
+
+.prose tbody td {
+  @apply p-2;
+}
+
+.prose p {
+  @apply my-6;
+}
+
+.prose.dark {
+  color: var(--foreground);
+}
+
+.prose.dark a {
+  color: var(--primary);
+}
+
+.prose.dark code {
+  @apply bg-secondary;
+}
+
+.prose.dark pre {
+  @apply bg-secondary;
+}
+
+.prose.dark blockquote {
+  @apply border-muted;
+}
+
+.prose.dark thead {
+  @apply bg-secondary;
+}
+
+.prose.dark tbody tr {
+  @apply border-border;
+}
+
+/* Task list styling */
+.prose ul.contains-task-list {
+  @apply pl-2;
+}
+
+.prose ul.contains-task-list li {
+  @apply list-none pl-0;
+}
+
+.prose ul.contains-task-list li::before {
+  content: none;
+}
+
+.prose ul.contains-task-list li input[type="checkbox"] {
+  @apply mr-2;
+}
+
+/* Add these styles to your existing globals.css */
+
+.markdown-content .list-item {
+  display: flex;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content .list-number {
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content code.inline-code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.1rem 0.2rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.dark .markdown-content code.inline-code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
