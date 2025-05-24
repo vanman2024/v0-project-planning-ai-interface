@@ -210,8 +210,8 @@ function ThreadItem({ thread, isActive, onClick }: ThreadItemProps) {
   }
 
   return (
-    <div
-      className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group ${
+    <button
+      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group text-left ${
         isActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
       }`}
       onClick={onClick}
@@ -259,6 +259,6 @@ function ThreadItem({ thread, isActive, onClick }: ThreadItemProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </button>
   )
 }

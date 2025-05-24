@@ -222,6 +222,10 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       name: att.name,
       type: getDocumentType(att.type),
       url: att.url,
+      // Add content for text files to avoid security issues
+      content: att.type.startsWith("text/")
+        ? "File content would be displayed here in a real implementation"
+        : undefined,
     }))
 
     // Find the index of the clicked attachment
@@ -314,7 +318,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto" style={{ height: "calc(100vh - 200px)" }}>
+      <div className="flex-1 overflow-y-auto" style={{ minHeight: "0", height: "auto" }}>
         <div className="p-4 space-y-6">
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>

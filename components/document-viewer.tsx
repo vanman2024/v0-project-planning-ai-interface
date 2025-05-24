@@ -108,30 +108,24 @@ export function DocumentViewer({
         )
       case "pdf":
         return (
-          <iframe
-            src={`${activeDoc.url}#view=FitH`}
-            title={activeDoc.name}
-            className="w-full h-[70vh]"
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center" }}
-          />
+          <div className="text-center p-8">
+            <p className="mb-4">PDF preview is not available due to security restrictions.</p>
+            <Button variant="outline" onClick={handleDownload} className="mt-4">
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </div>
         )
       case "text":
       case "markdown":
-        return (
-          <ScrollArea className="h-[70vh] w-full">
-            <pre
-              className="p-4 whitespace-pre-wrap break-words"
-              style={{ fontSize: `${Math.max(100 * zoomLevel, 75)}%` }}
-            >
-              {activeDoc.content}
-            </pre>
-          </ScrollArea>
-        )
       case "code":
         return (
           <ScrollArea className="h-[70vh] w-full">
-            <pre className="p-4 bg-muted rounded-md" style={{ fontSize: `${Math.max(100 * zoomLevel, 75)}%` }}>
-              <code>{activeDoc.content}</code>
+            <pre
+              className="p-4 whitespace-pre-wrap break-words bg-muted rounded-md"
+              style={{ fontSize: `${Math.max(100 * zoomLevel, 75)}%` }}
+            >
+              {activeDoc.content || "File content preview is not available."}
             </pre>
           </ScrollArea>
         )
