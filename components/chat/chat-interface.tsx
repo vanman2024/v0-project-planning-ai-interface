@@ -176,10 +176,9 @@ export function ChatInterface() {
       name: "Shopping Cart Implementation with Real-time Updates",
       agentType: "feature",
       projectId: "project1",
+      isPinned: false,
       lastMessage: "Let's discuss the shopping cart requirements",
       lastMessageTime: "Wednesday",
-      isPinned: false,
-      projectId: "project1",
     },
     {
       id: "thread6",
@@ -315,6 +314,21 @@ export function ChatInterface() {
         agentType: "documentation",
         timestamp: "10:24 AM",
         attachments: [sampleDocuments[2]],
+      },
+      {
+        id: "demo-msg",
+        role: "user",
+        content: "Here's a test message with an attachment to demonstrate the document viewer functionality:",
+        timestamp: "10:25 AM",
+        attachments: [
+          {
+            id: "demo-doc",
+            name: "test-document.txt",
+            type: "text" as const,
+            content:
+              "This is a test document to demonstrate the document viewing functionality.\n\nYou can click on this attachment to open it in the document viewer.\n\nThe viewer supports:\n- Text files\n- Images\n- PDFs\n- Code files\n- Markdown files",
+          },
+        ],
       },
     ],
     thread2: [
@@ -582,14 +596,17 @@ export function ChatInterface() {
 
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input changed", e.target.files)
     if (e.target.files) {
       const filesArray = Array.from(e.target.files)
+      console.log("Files selected:", filesArray)
       setSelectedFiles((prev) => [...prev, ...filesArray])
     }
   }
 
   // Trigger file input click
   const triggerFileInput = () => {
+    console.log("Paperclip clicked, triggering file input")
     fileInputRef.current?.click()
   }
 
@@ -763,6 +780,7 @@ export function ChatInterface() {
     const userInput = threadInput
     setThreadInput("")
     setIsThreadLoading(true)
+    setIsThreadLoading(true)
 
     try {
       // Get the parent message and all existing replies
@@ -921,6 +939,15 @@ export function ChatInterface() {
     return () => scrollArea.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (selectedThread === "thread1") {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 500)
+    }
+  }, [selectedThread])
+
   // Get color for agent type
   const getAgentColor = (agentType: AgentType): string => {
     const colors: Record<AgentType, string> = {
@@ -1066,9 +1093,6 @@ export function ChatInterface() {
 
   // Render a message with its content and actions
   const renderMessage = (message: Message, isThreadReply = false) => {
-    // Add this console log to verify the function is being called with the updated code
-    console.log("Rendering message with document support:", message.id)
-
     // Determine if message is long (more than 300 characters)
     const isLongMessage = message.content.length > 300
     const isExpanded = expandedMessages[message.id] || false
@@ -1611,9 +1635,36 @@ export function ChatInterface() {
               className="flex-1"
               disabled={!currentThread}
             />
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" multiple />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              className="hidden"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.txt,.md,.js,.ts,.jsx,.tsx,.json,.csv,.xls,.xlsx"
+            />
             <Button type="button" variant="outline" size="icon" onClick={triggerFileInput} disabled={!currentThread}>
               <Paperclip className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                // Add a test document to demonstrate functionality
+                const testDoc: DocumentFile = {
+                  id: `test-${Date.now()}`,
+                  name: "sample-document.md",
+                  type: "markdown",
+                  content:
+                    "# Sample Document\n\nThis is a test document added via the test button.\n\n## Features\n- Click to view in document viewer\n- Supports zoom and fullscreen\n- Can navigate between multiple documents",
+                }
+                setSelectedFiles([new File([testDoc.content || ""], testDoc.name, { type: "text/markdown" })])
+              }}
+              disabled={!currentThread}
+              title="Add test document"
+            >
+              <FileText className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
