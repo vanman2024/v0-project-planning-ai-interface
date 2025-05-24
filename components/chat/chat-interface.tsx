@@ -30,6 +30,11 @@ import {
   Share2,
   MoreHorizontal,
   Maximize2,
+  Paperclip,
+  ImageIcon,
+  FileIcon,
+  Code,
+  File,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
@@ -43,10 +48,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// Add a document viewer modal for very long messages
-// Add these imports at the top of the file (around line 20)
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
+import { DocumentViewer, type DocumentFile } from "@/components/document-viewer"
 
 type AgentType = "project" | "task" | "feature" | "documentation" | "detail" | "planning"
 
@@ -74,6 +77,7 @@ interface Message {
   threadId?: string
   parentId?: string
   replyCount?: number
+  attachments?: DocumentFile[]
 }
 
 export function ChatInterface() {
@@ -88,6 +92,7 @@ export function ChatInterface() {
   const resizerRef = useRef<HTMLDivElement>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Dialog states
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
@@ -101,7 +106,9 @@ export function ChatInterface() {
   // Add state for the document viewer
   // Add this with the other state declarations (around line 80)
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false)
-  const [viewedDocument, setViewedDocument] = useState<{ title: string; content: string } | null>(null)
+  const [viewedDocument, setViewedDocument] = useState<DocumentFile | null>(null)
+  const [viewedDocuments, setViewedDocuments] = useState<DocumentFile[]>([])
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0)
 
   // First, add a new state to track expanded message states
   const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({})
@@ -169,9 +176,10 @@ export function ChatInterface() {
       name: "Shopping Cart Implementation with Real-time Updates",
       agentType: "feature",
       projectId: "project1",
-      isPinned: false,
       lastMessage: "Let's discuss the shopping cart requirements",
       lastMessageTime: "Wednesday",
+      isPinned: false,
+      projectId: "project1",
     },
     {
       id: "thread6",
@@ -210,6 +218,31 @@ export function ChatInterface() {
       ),
     )
   }
+
+  // Sample document files for demo
+  const sampleDocuments: DocumentFile[] = [
+    {
+      id: "doc1",
+      name: "Project Requirements.md",
+      type: "markdown",
+      content:
+        "# Project Requirements\n\n## Overview\nThis document outlines the requirements for the e-commerce platform.\n\n## Functional Requirements\n1. User Authentication\n2. Product Catalog\n3. Shopping Cart\n4. Checkout Process\n5. Payment Integration\n\n## Technical Requirements\n1. React Frontend\n2. Node.js Backend\n3. MongoDB Database\n4. RESTful API\n5. Responsive Design",
+    },
+    {
+      id: "doc2",
+      name: "architecture-diagram.png",
+      type: "image",
+      url: "/placeholder.svg?height=600&width=800&query=E-commerce+Architecture+Diagram",
+    },
+    {
+      id: "doc3",
+      name: "api-endpoints.js",
+      type: "code",
+      language: "javascript",
+      content:
+        "/**\n * API Endpoints\n */\n\n// User Authentication\napp.post('/api/auth/login', loginController);\napp.post('/api/auth/register', registerController);\napp.post('/api/auth/logout', logoutController);\n\n// Products\napp.get('/api/products', getProductsController);\napp.get('/api/products/:id', getProductController);\napp.post('/api/products', createProductController);\napp.put('/api/products/:id', updateProductController);\napp.delete('/api/products/:id', deleteProductController);",
+    },
+  ]
 
   // Store messages by thread ID
   const [messagesByThread, setMessagesByThread] = useState<Record<string, Message[]>>({
@@ -250,6 +283,38 @@ export function ChatInterface() {
         agentType: "project",
         timestamp: "10:15 AM",
         replyCount: 2,
+      },
+      {
+        id: "msg5",
+        role: "user",
+        content: "Can you share some documentation about database design patterns for e-commerce?",
+        timestamp: "10:20 AM",
+      },
+      {
+        id: "msg6",
+        role: "assistant",
+        content:
+          "I've prepared some documentation on database design patterns for e-commerce applications. Here are the key resources you should review:",
+        agentType: "documentation",
+        timestamp: "10:22 AM",
+        attachments: [sampleDocuments[0]],
+      },
+      {
+        id: "msg7",
+        role: "assistant",
+        content:
+          "I've also created a high-level architecture diagram that shows how the database components fit into the overall system:",
+        agentType: "documentation",
+        timestamp: "10:23 AM",
+        attachments: [sampleDocuments[1]],
+      },
+      {
+        id: "msg8",
+        role: "assistant",
+        content: "And here's a sample of the API endpoints you'll need to implement to interact with the database:",
+        agentType: "documentation",
+        timestamp: "10:24 AM",
+        attachments: [sampleDocuments[2]],
       },
     ],
     thread2: [
@@ -335,6 +400,7 @@ export function ChatInterface() {
   const [showContext, setShowContext] = useState(false)
   const [currentAgentType, setCurrentAgentType] = useState<AgentType | null>(null)
   const [isResizing, setIsResizing] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -471,17 +537,22 @@ export function ChatInterface() {
 
   // Add a function to open the document viewer
   // Add this with the other handler functions (around line 320)
-  const openDocumentViewer = (message: Message) => {
-    const title =
-      message.role === "assistant"
-        ? `${getAgentName(message.agentType || currentThread?.agentType || "project")}'s Message`
-        : "Your Message"
-
-    setViewedDocument({
-      title,
-      content: message.content,
-    })
+  const openDocumentViewer = (document: DocumentFile, documents?: DocumentFile[]) => {
+    if (documents && documents.length > 0) {
+      setViewedDocuments(documents)
+      setCurrentDocumentIndex(documents.findIndex((doc) => doc.id === document.id) || 0)
+      setViewedDocument(null)
+    } else {
+      setViewedDocument(document)
+      setViewedDocuments([])
+      setCurrentDocumentIndex(0)
+    }
     setDocumentViewerOpen(true)
+  }
+
+  // Function to navigate between documents in the viewer
+  const handleDocumentNavigation = (index: number) => {
+    setCurrentDocumentIndex(index)
   }
 
   // Add a function to scroll to bottom
@@ -509,14 +580,70 @@ export function ChatInterface() {
     threadMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files)
+      setSelectedFiles((prev) => [...prev, ...filesArray])
+    }
+  }
+
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  // Remove a selected file
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Convert File objects to DocumentFile objects
+  const filesToDocumentFiles = (files: File[]): DocumentFile[] => {
+    return files.map((file) => {
+      const fileType = getFileType(file.type)
+      const id = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+
+      return {
+        id,
+        name: file.name,
+        type: fileType,
+        // In a real app, you would upload the file and get a URL
+        url: URL.createObjectURL(file),
+        // For text files, you could read the content
+        content: fileType === "text" || fileType === "code" ? "File content would be read here" : undefined,
+      }
+    })
+  }
+
+  // Determine file type from MIME type
+  const getFileType = (mimeType: string): DocumentFile["type"] => {
+    if (mimeType.startsWith("image/")) return "image"
+    if (mimeType === "application/pdf") return "pdf"
+    if (mimeType.includes("spreadsheet") || mimeType === "application/vnd.ms-excel") return "spreadsheet"
+    if (mimeType.includes("text/markdown")) return "markdown"
+    if (mimeType.startsWith("text/")) return "text"
+
+    // Default to code for various programming languages
+    const codeTypes = ["javascript", "typescript", "python", "java", "c", "cpp", "csharp", "php", "ruby", "go", "rust"]
+    for (const type of codeTypes) {
+      if (mimeType.includes(type)) return "code"
+    }
+
+    return "text"
+  }
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!input.trim() || !currentThread) return
+    if ((!input.trim() && selectedFiles.length === 0) || !currentThread) return
 
     // Determine which agent type to use for this message
     const messageAgentType = currentAgentType || currentThread.agentType
+
+    // Convert selected files to document files
+    const attachments = filesToDocumentFiles(selectedFiles)
 
     // Add user message to the chat
     const userMessage: Message = {
@@ -524,6 +651,7 @@ export function ChatInterface() {
       role: "user",
       content: input,
       timestamp: formatTime(),
+      attachments: attachments.length > 0 ? attachments : undefined,
     }
 
     // Update messages for the current thread
@@ -535,6 +663,7 @@ export function ChatInterface() {
     // Clear input and set loading state
     const userInput = input
     setInput("")
+    setSelectedFiles([])
     setIsLoading(true)
     setChatError(null)
 
@@ -738,11 +867,6 @@ export function ChatInterface() {
     )
   }
 
-  // Scroll to bottom of messages when new messages arrive
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  // }, [currentMessages])
-
   // Scroll to bottom of messages when new messages arrive or when a message is expanded
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -766,8 +890,6 @@ export function ChatInterface() {
   }, [activeMessageReplies])
 
   // Add a scroll event handler to detect when not at the bottom
-  // Add this useEffect after the other useEffects (around line 410)
-
   useEffect(() => {
     const scrollArea = scrollAreaRef.current
     if (!scrollArea) return
@@ -854,6 +976,22 @@ export function ChatInterface() {
         return <Calendar className="h-4 w-4" />
       default:
         return <MessageSquare className="h-4 w-4" />
+    }
+  }
+
+  // Get icon for document type
+  const getDocumentIcon = (type: DocumentFile["type"]) => {
+    switch (type) {
+      case "image":
+        return <ImageIcon className="h-4 w-4" />
+      case "pdf":
+        return <FileIcon className="h-4 w-4" />
+      case "code":
+        return <Code className="h-4 w-4" />
+      case "markdown":
+        return <FileText className="h-4 w-4" />
+      default:
+        return <File className="h-4 w-4" />
     }
   }
 
@@ -976,6 +1114,28 @@ export function ChatInterface() {
               >
                 <div className="text-sm whitespace-pre-line break-words">{displayContent}</div>
 
+                {/* Render attachments if any */}
+                {message.attachments && message.attachments.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {message.attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center gap-2 p-2 rounded-md bg-background/50 hover:bg-background cursor-pointer"
+                        onClick={() => openDocumentViewer(attachment, message.attachments)}
+                      >
+                        <div className="p-1 rounded bg-muted">{getDocumentIcon(attachment.type)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium truncate">{attachment.name}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{attachment.type}</div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <Maximize2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {isLongMessage && (
                   <Button
                     variant="ghost"
@@ -990,7 +1150,17 @@ export function ChatInterface() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => openDocumentViewer(message)}
+                    onClick={() =>
+                      openDocumentViewer({
+                        id: `msg-${message.id}`,
+                        name:
+                          message.role === "assistant"
+                            ? `${getAgentName(message.agentType || currentThread?.agentType || "project")}'s Message`
+                            : "Your Message",
+                        type: "text",
+                        content: message.content,
+                      })
+                    }
                     className="mt-2 ml-2 text-xs h-7 px-2"
                   >
                     <Maximize2 className="h-3 w-3 mr-1" />
@@ -1411,6 +1581,23 @@ export function ChatInterface() {
           </div>
         )}
 
+        {/* Selected files display */}
+        {selectedFiles.length > 0 && (
+          <div className="px-3 py-2 border-t">
+            <div className="text-xs font-medium mb-2">Attachments ({selectedFiles.length})</div>
+            <div className="flex flex-wrap gap-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-1 bg-muted rounded-md px-2 py-1">
+                  <span className="text-xs truncate max-w-[150px]">{file.name}</span>
+                  <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => removeSelectedFile(index)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Message Input */}
         <div className="p-3 border-t">
           <form onSubmit={handleSubmit} className="flex gap-2">
@@ -1421,6 +1608,10 @@ export function ChatInterface() {
               className="flex-1"
               disabled={!currentThread}
             />
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" multiple />
+            <Button type="button" variant="outline" size="icon" onClick={triggerFileInput} disabled={!currentThread}>
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" disabled={!currentThread}>
@@ -1454,7 +1645,11 @@ export function ChatInterface() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type="submit" size="icon" disabled={isLoading || !currentThread || !input.trim()}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading || !currentThread || (!input.trim() && selectedFiles.length === 0)}
+            >
               <Send className="h-4 w-4" />
             </Button>
           </form>
@@ -1624,20 +1819,15 @@ export function ChatInterface() {
         </DialogContent>
       </Dialog>
 
-      {/* Document Viewer Sheet */}
-      <Sheet open={documentViewerOpen} onOpenChange={setDocumentViewerOpen}>
-        <SheetContent className="w-[90%] sm:max-w-[600px] md:max-w-[800px]" side="right">
-          <SheetHeader>
-            <SheetTitle>{viewedDocument?.title || "Document"}</SheetTitle>
-            <SheetDescription>Viewing the full content in a dedicated panel</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 overflow-y-auto max-h-[80vh]">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div className="whitespace-pre-line break-words">{viewedDocument?.content}</div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Document Viewer */}
+      <DocumentViewer
+        isOpen={documentViewerOpen}
+        onClose={() => setDocumentViewerOpen(false)}
+        document={viewedDocument}
+        documents={viewedDocuments}
+        currentIndex={currentDocumentIndex}
+        onNavigate={handleDocumentNavigation}
+      />
     </div>
   )
 }
