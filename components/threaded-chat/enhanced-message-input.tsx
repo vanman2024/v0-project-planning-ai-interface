@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Smile, Paperclip, Bold, Italic, Code, List, ListOrdered, AtSign, Hash } from "lucide-react"
@@ -12,6 +12,7 @@ interface EnhancedMessageInputProps {
   onChange: (value: string) => void
   onSend: () => void
   placeholder?: string
+  onFileSelect?: (files: File[]) => void
 }
 
 export function EnhancedMessageInput({
@@ -19,8 +20,17 @@ export function EnhancedMessageInput({
   onChange,
   onSend,
   placeholder = "Type a message...",
+  onFileSelect,
 }: EnhancedMessageInputProps) {
   const [isFocused, setIsFocused] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0 && onFileSelect) {
+      onFileSelect(files)
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -129,10 +139,23 @@ export function EnhancedMessageInput({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Paperclip className="h-4 w-4" />
             <span className="sr-only">Attach file</span>
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.doc,.docx,.txt,.md,.json,.js,.jsx,.ts,.tsx,.css,.html"
+          />
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
             <Smile className="h-4 w-4" />
             <span className="sr-only">Add emoji</span>
