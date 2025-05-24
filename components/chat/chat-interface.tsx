@@ -1066,6 +1066,9 @@ export function ChatInterface() {
 
   // Render a message with its content and actions
   const renderMessage = (message: Message, isThreadReply = false) => {
+    // Add this console log to verify the function is being called with the updated code
+    console.log("Rendering message with document support:", message.id)
+
     // Determine if message is long (more than 300 characters)
     const isLongMessage = message.content.length > 300
     const isExpanded = expandedMessages[message.id] || false
