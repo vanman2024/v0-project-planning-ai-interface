@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Search, X, MessageSquare, Bot, Paperclip } from "lucide-react"
+import { Search, X, MessageSquare, Bot, FileText, ImageIcon, File } from "lucide-react"
 import { EnhancedMessageInput } from "./enhanced-message-input"
 import { MessageReactions } from "./message-reactions"
 import { MessageUtilityBar } from "./message-utility-bar"
+import { DocumentViewer, type DocumentFile } from "../document-viewer"
 
 // Mock data for messages
 const mockMessages = [
@@ -85,6 +86,10 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [viewerOpen, setViewerOpen] = useState(false)
+  const [currentDocument, setCurrentDocument] = useState<DocumentFile | null>(null)
+  const [viewerDocuments, setViewerDocuments] = useState<DocumentFile[]>([])
+  const [currentDocIndex, setCurrentDocIndex] = useState(0)
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -110,9 +115,11 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       hasThread: false,
       threadCount: 0,
       attachments: attachedFiles.map((file) => ({
+        id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         name: file.name,
         size: file.size,
         type: file.type,
+        url: URL.createObjectURL(file),
       })),
     }
 
@@ -148,6 +155,68 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
         year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
       })
     }
+  }
+
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith("image/")) {
+      return <ImageIcon className="h-3 w-3" />
+    } else if (
+      mimeType === "application/pdf" ||
+      mimeType === "application/msword" ||
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
+      return <FileText className="h-3 w-3" />
+    } else {
+      return <File className="h-3 w-3" />
+    }
+  }
+
+  const getDocumentType = (mimeType: string): "image" | "pdf" | "text" | "code" | "markdown" | "spreadsheet" => {
+    if (mimeType.startsWith("image/")) {
+      return "image"
+    } else if (mimeType === "application/pdf") {
+      return "pdf"
+    } else if (
+      mimeType === "text/plain" ||
+      mimeType === "application/msword" ||
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
+      return "text"
+    } else if (
+      mimeType === "text/javascript" ||
+      mimeType === "application/json" ||
+      mimeType === "text/html" ||
+      mimeType === "text/css"
+    ) {
+      return "code"
+    } else if (mimeType === "text/markdown") {
+      return "markdown"
+    } else if (
+      mimeType === "application/vnd.ms-excel" ||
+      mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ) {
+      return "spreadsheet"
+    } else {
+      return "text"
+    }
+  }
+
+  const handleOpenAttachment = (attachment: any, messageAttachments: any[]) => {
+    // Convert all attachments in the message to DocumentFile format
+    const docs: DocumentFile[] = messageAttachments.map((att) => ({
+      id: att.id,
+      name: att.name,
+      type: getDocumentType(att.type),
+      url: att.url,
+    }))
+
+    // Find the index of the clicked attachment
+    const index = docs.findIndex((doc) => doc.id === attachment.id)
+
+    setViewerDocuments(docs)
+    setCurrentDocIndex(index >= 0 ? index : 0)
+    setCurrentDocument(docs[index >= 0 ? index : 0])
+    setViewerOpen(true)
   }
 
   // Group messages by date
@@ -231,8 +300,8 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       )}
 
       {/* Messages area */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-6">
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
               <div className="flex items-center gap-2 mb-4">
@@ -264,13 +333,21 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
 
                         {/* Display attachments */}
                         {message.attachments && message.attachments.length > 0 && (
-                          <div className="mt-2 space-y-1">
+                          <div className="mt-2 flex flex-wrap gap-2">
                             {message.attachments.map((attachment, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Paperclip className="h-3 w-3" />
-                                <span>{attachment.name}</span>
-                                <span className="text-xs">({(attachment.size / 1024).toFixed(1)} KB)</span>
-                              </div>
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs flex items-center gap-1"
+                                onClick={() => handleOpenAttachment(attachment, message.attachments)}
+                              >
+                                {getFileIcon(attachment.type)}
+                                <span className="truncate max-w-[120px]">{attachment.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({(attachment.size / 1024).toFixed(1)} KB)
+                                </span>
+                              </Button>
                             ))}
                           </div>
                         )}
@@ -315,6 +392,16 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
           setFiles={setAttachedFiles}
         />
       </div>
+
+      {/* Document viewer */}
+      <DocumentViewer
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        document={currentDocument}
+        documents={viewerDocuments}
+        currentIndex={currentDocIndex}
+        onNavigate={setCurrentDocIndex}
+      />
     </div>
   )
 }

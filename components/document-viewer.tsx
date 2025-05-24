@@ -153,7 +153,7 @@ export function DocumentViewer({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl w-[90vw]">
         <DialogHeader>
           <DialogTitle>{activeDoc?.name || "Document Viewer"}</DialogTitle>
