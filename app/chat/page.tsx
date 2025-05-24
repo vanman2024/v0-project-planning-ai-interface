@@ -1,10 +1,20 @@
-import { ChatInterface } from "@/components/chat/chat-interface"
+"use client"
+
+import { ThreadedChat } from "@/components/threaded-chat"
+import { ChatProvider } from "@/contexts/chat-context"
+import { ThreadProvider } from "@/contexts/thread-context"
+import { ProjectProvider } from "@/contexts/project-context"
 
 export default function ChatPage() {
   return (
     <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-6">Project Chat</h1>
-      <ChatInterface />
+      <ProjectProvider>
+        <ChatProvider>
+          <ThreadProvider>
+            <ThreadedChat />
+          </ThreadProvider>
+        </ChatProvider>
+      </ProjectProvider>
     </div>
   )
 }
