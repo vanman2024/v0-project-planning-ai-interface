@@ -1,7 +1,5 @@
 "use client"
 
-import { ScrollArea } from "@/components/ui/scroll-area"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
@@ -11,6 +9,7 @@ import { EnhancedMessageInput } from "./enhanced-message-input"
 import { MessageReactions } from "./message-reactions"
 import { MessageUtilityBar } from "./message-utility-bar"
 import { DocumentViewer, type DocumentFile } from "../document-viewer"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 // Mock data for messages
 const mockMessages = [
@@ -318,7 +317,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto" style={{ minHeight: "0", height: "auto" }}>
+      <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-6">
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
