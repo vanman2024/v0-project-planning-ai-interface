@@ -1,8 +1,9 @@
 "use client"
 
+import { ScrollArea } from "@/components/ui/scroll-area"
+
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Search, X, MessageSquare, Bot, FileText, ImageIcon, File } from "lucide-react"
@@ -96,7 +97,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages])
+  }, [messages.length]) // Only run when the number of messages changes
 
   const handleSendMessage = () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return
@@ -127,14 +128,13 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
     }
 
     // Update messages with the new message
-    const updatedMessages = [...messages, newMessage]
-    setMessages(updatedMessages)
+    setMessages((prevMessages) => [...prevMessages, newMessage])
 
     // Clear input and attached files
     setMessageInput("")
     setAttachedFiles([])
 
-    // Ensure scroll to bottom after state update
+    // Force scroll to bottom after state update
     setTimeout(() => {
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
@@ -314,7 +314,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       )}
 
       {/* Messages area */}
-      <ScrollArea className="flex-1 h-full">
+      <div className="flex-1 overflow-y-auto" style={{ height: "calc(100vh - 200px)" }}>
         <div className="p-4 space-y-6">
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
@@ -393,7 +393,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
           ))}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Message input */}
       <div className="p-3 border-t">
