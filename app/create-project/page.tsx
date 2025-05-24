@@ -1,5 +1,5 @@
-import { CreateProjectInterface } from "@/components/create-project-interface"
+import { CreateProjectInterfaceRevised } from "@/components/create-project-interface-revised"
 
 export default function CreateProjectPage() {
-  return <CreateProjectInterface />
+  return <CreateProjectInterfaceRevised />
 }
