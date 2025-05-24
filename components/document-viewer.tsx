@@ -1,190 +1,222 @@
 "use client"
 
 import { useState } from "react"
-import { X, Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ChevronLeft, ChevronRight, Download, Maximize2, ZoomIn, ZoomOut } from "lucide-react"
 
-export interface DocumentFile {
+export type DocumentFile = {
   id: string
   name: string
-  type: "pdf" | "image" | "text" | "code" | "markdown" | "spreadsheet"
-  url?: string
+  type: "image" | "pdf" | "text" | "code" | "markdown" | "spreadsheet"
   content?: string
-  language?: string // For code files
-  preview?: string // For image thumbnails
+  url?: string
+  language?: string
 }
 
 interface DocumentViewerProps {
   isOpen: boolean
   onClose: () => void
   document: DocumentFile | null
-  documents?: DocumentFile[] // For multi-document viewing
-  currentIndex?: number
-  onNavigate?: (index: number) => void
+  documents: DocumentFile[]
+  currentIndex: number
+  onNavigate: (index: number) => void
 }
 
 export function DocumentViewer({
   isOpen,
   onClose,
   document,
-  documents = [],
-  currentIndex = 0,
+  documents,
+  currentIndex,
   onNavigate,
 }: DocumentViewerProps) {
-  const [zoom, setZoom] = useState(100)
+  const [zoomLevel, setZoomLevel] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  // If we have a documents array and a currentIndex, use that document
-  const currentDocument = documents.length > 0 ? documents[currentIndex] : document
-  const hasMultipleDocuments = documents.length > 1
+  const activeDoc = document || (documents.length > 0 ? documents[currentIndex] : null)
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 25, 200))
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 25, 50))
-
-  const handleFullscreen = () => {
-    if (document?.type === "image" && document.url) {
-      const img = new Image()
-      img.src = document.url
-      const newWindow = window.open("")
-      if (newWindow) {
-        newWindow.document.write(img.outerHTML)
-      }
-    } else {
-      setIsFullscreen(!isFullscreen)
-    }
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => Math.min(prev + 0.25, 3))
   }
 
-  const handlePrevious = () => {
-    if (onNavigate && currentIndex > 0) {
-      onNavigate(currentIndex - 1)
-    }
-  }
-
-  const handleNext = () => {
-    if (onNavigate && currentIndex < documents.length - 1) {
-      onNavigate(currentIndex + 1)
-    }
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5))
   }
 
   const handleDownload = () => {
-    if (currentDocument?.url) {
-      const link = document.createElement("a")
-      link.href = currentDocument.url
-      link.download = currentDocument.name
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+    if (!activeDoc) return
+
+    if (activeDoc.url) {
+      // For files with URLs, create a download link
+      const a = document.createElement("a")
+      a.href = activeDoc.url
+      a.download = activeDoc.name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } else if (activeDoc.content) {
+      // For text content, create a blob and download
+      const blob = new Blob([activeDoc.content], { type: "text/plain" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = activeDoc.name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
     }
   }
 
-  if (!currentDocument) return null
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+      })
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false)
+        })
+      }
+    }
+  }
+
+  const renderDocumentContent = () => {
+    if (!activeDoc) return null
+
+    switch (activeDoc.type) {
+      case "image":
+        return (
+          <div className="flex items-center justify-center h-full">
+            <img
+              src={activeDoc.url || "/placeholder.svg"}
+              alt={activeDoc.name}
+              style={{ transform: `scale(${zoomLevel})`, maxWidth: "100%", transition: "transform 0.2s" }}
+              className="max-h-[70vh]"
+            />
+          </div>
+        )
+      case "pdf":
+        return (
+          <iframe
+            src={`${activeDoc.url}#view=FitH`}
+            title={activeDoc.name}
+            className="w-full h-[70vh]"
+            style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center" }}
+          />
+        )
+      case "text":
+      case "markdown":
+        return (
+          <ScrollArea className="h-[70vh] w-full">
+            <pre
+              className="p-4 whitespace-pre-wrap break-words"
+              style={{ fontSize: `${Math.max(100 * zoomLevel, 75)}%` }}
+            >
+              {activeDoc.content}
+            </pre>
+          </ScrollArea>
+        )
+      case "code":
+        return (
+          <ScrollArea className="h-[70vh] w-full">
+            <pre className="p-4 bg-muted rounded-md" style={{ fontSize: `${Math.max(100 * zoomLevel, 75)}%` }}>
+              <code>{activeDoc.content}</code>
+            </pre>
+          </ScrollArea>
+        )
+      case "spreadsheet":
+        return (
+          <div className="text-center p-8">
+            <p>Spreadsheet preview not available.</p>
+            {activeDoc.url && (
+              <Button variant="outline" onClick={handleDownload} className="mt-4">
+                <Download className="h-4 w-4 mr-2" />
+                Download Spreadsheet
+              </Button>
+            )}
+          </div>
+        )
+      default:
+        return <div>Unsupported file type</div>
+    }
+  }
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        className={`${isFullscreen ? "w-screen h-screen max-w-none p-0" : "w-[90%] sm:max-w-[700px] md:max-w-[900px]"}`}
-        side="right"
-      >
-        {!isFullscreen && (
-          <SheetHeader className="mb-4">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="truncate">{currentDocument.name}</SheetTitle>
-              <div className="flex items-center gap-2">
-                {hasMultipleDocuments && (
-                  <div className="flex items-center mr-2">
-                    <Button variant="outline" size="icon" onClick={handlePrevious} disabled={currentIndex === 0}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="mx-2 text-sm">
-                      {currentIndex + 1} / {documents.length}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleNext}
-                      disabled={currentIndex === documents.length - 1}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-                <Button variant="outline" size="icon" onClick={handleZoomOut} disabled={zoom <= 50}>
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="text-xs w-12 text-center">{zoom}%</span>
-                <Button variant="outline" size="icon" onClick={handleZoomIn} disabled={zoom >= 200}>
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleFullscreen}>
-                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleDownload} disabled={!currentDocument.url}>
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="h-4 w-4" />
-                </Button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl w-[90vw]">
+        <DialogHeader>
+          <DialogTitle>{activeDoc?.name || "Document Viewer"}</DialogTitle>
+          <DialogDescription>
+            {documents.length > 1 && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm">
+                  Document {currentIndex + 1} of {documents.length}
+                </span>
               </div>
-            </div>
-          </SheetHeader>
-        )}
+            )}
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className={`${isFullscreen ? "h-full" : "h-[calc(100vh-10rem)]"} overflow-hidden`}>
-          <ScrollArea className="h-full">
-            <div className="p-4" style={{ zoom: `${zoom}%` }}>
-              {renderDocumentContent(currentDocument)}
-            </div>
-          </ScrollArea>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={handleZoomOut} disabled={zoomLevel <= 0.5}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="text-sm">{Math.round(zoomLevel * 100)}%</span>
+            <Button variant="outline" size="icon" onClick={handleZoomIn} disabled={zoomLevel >= 3}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {documents.length > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onNavigate(Math.max(0, currentIndex - 1))}
+                  disabled={currentIndex === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onNavigate(Math.min(documents.length - 1, currentIndex + 1))}
+                  disabled={currentIndex === documents.length - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="icon" onClick={toggleFullscreen}>
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleDownload}>
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <div className="border rounded-lg overflow-hidden bg-background">{renderDocumentContent()}</div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
-}
-
-function renderDocumentContent(document: DocumentFile) {
-  switch (document.type) {
-    case "image":
-      return document.url ? (
-        <div className="flex justify-center">
-          <img src={document.url || "/placeholder.svg"} alt={document.name} className="max-w-full object-contain" />
-        </div>
-      ) : (
-        <div className="text-center text-muted-foreground">Image preview not available</div>
-      )
-
-    case "pdf":
-      return document.url ? (
-        <iframe src={`${document.url}#toolbar=0`} className="w-full h-[calc(100vh-12rem)]" title={document.name} />
-      ) : (
-        <div className="text-center text-muted-foreground">PDF preview not available</div>
-      )
-
-    case "text":
-    case "markdown":
-      return (
-        <div className="whitespace-pre-wrap font-mono text-sm bg-muted p-4 rounded-md">
-          {document.content || "No content available"}
-        </div>
-      )
-
-    case "code":
-      return (
-        <div className="font-mono text-sm bg-muted p-4 rounded-md overflow-x-auto">
-          <pre>{document.content || "No content available"}</pre>
-        </div>
-      )
-
-    case "spreadsheet":
-      return (
-        <div className="text-center p-8">
-          <p className="mb-4 text-muted-foreground">Spreadsheet preview not available</p>
-          {document.url && <Button onClick={() => window.open(document.url, "_blank")}>Open Spreadsheet</Button>}
-        </div>
-      )
-
-    default:
-      return <div className="text-center text-muted-foreground">Preview not available for this file type</div>
-  }
 }

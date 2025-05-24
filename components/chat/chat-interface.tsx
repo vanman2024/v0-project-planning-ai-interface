@@ -42,6 +42,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ conversationId }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const { loading, error, data, subscribeToMore } = useQuery(GET_MESSAGES, {
     variables: { conversationId },
@@ -254,7 +255,7 @@ interface EnhancedMessageInputProps {
   value: string
   onChange: (value: string) => void
   onSend: () => void
-  onFileSelect: (event: ChangeEvent<HTMLInputElement>) => void
+  onFileSelect: (files: File[]) => void
   placeholder?: string
 }
 
@@ -282,7 +283,15 @@ const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
           }
         }}
       />
-      <input type="file" id="file-upload" style={{ display: "none" }} onChange={onFileSelect} />
+      <input
+        type="file"
+        id="file-upload"
+        style={{ display: "none" }}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          const files = Array.from(e.target.files || [])
+          onFileSelect(files)
+        }}
+      />
       <label htmlFor="file-upload">
         <IconButton aria-label="Attach file" icon={<AttachmentIcon />} colorScheme="gray" variant="ghost" mr={3} />
       </label>

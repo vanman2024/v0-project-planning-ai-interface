@@ -5,14 +5,15 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Smile, Paperclip, Bold, Italic, Code, List, ListOrdered, AtSign, Hash } from "lucide-react"
+import { Send, Smile, Paperclip, Bold, Italic, Code, List, ListOrdered, AtSign, Hash, X } from "lucide-react"
 
 interface EnhancedMessageInputProps {
   value: string
   onChange: (value: string) => void
   onSend: () => void
   placeholder?: string
-  onFileSelect?: (files: File[]) => void
+  files?: File[]
+  setFiles?: (files: File[]) => void
 }
 
 export function EnhancedMessageInput({
@@ -20,15 +21,19 @@ export function EnhancedMessageInput({
   onChange,
   onSend,
   placeholder = "Type a message...",
-  onFileSelect,
+  files = [],
+  setFiles = () => {},
 }: EnhancedMessageInputProps) {
   const [isFocused, setIsFocused] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length > 0 && onFileSelect) {
-      onFileSelect(files)
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files)
+      setFiles([...files, ...newFiles])
+
+      // Reset the input value so the same file can be selected again
+      e.target.value = ""
     }
   }
 
@@ -59,8 +64,29 @@ export function EnhancedMessageInput({
     }, 0)
   }
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const newFiles = Array.from(e.dataTransfer.files)
+      setFiles([...files, ...newFiles])
+    }
+  }
+
+  const removeFile = (index: number) => {
+    const newFiles = [...files]
+    newFiles.splice(index, 1)
+    setFiles(newFiles)
+  }
+
   return (
-    <div className="rounded-md border bg-background">
+    <div className="rounded-md border bg-background" onDragOver={handleDragOver} onDrop={handleDrop}>
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -70,6 +96,22 @@ export function EnhancedMessageInput({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
       />
+
+      {files.length > 0 && (
+        <div className="px-3 py-2 border-t">
+          <div className="text-xs font-medium mb-2">Attachments ({files.length})</div>
+          <div className="flex flex-wrap gap-2">
+            {files.map((file, index) => (
+              <div key={index} className="flex items-center gap-1 bg-muted rounded-md px-2 py-1">
+                <span className="text-xs truncate max-w-[150px]">{file.name}</span>
+                <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => removeFile(index)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between p-2 border-t">
         <div className="flex items-center gap-1">
