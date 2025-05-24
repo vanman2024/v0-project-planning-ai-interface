@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -58,22 +58,30 @@ export function ProjectSelector() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [projects, setProjects] = useState(mockProjects)
   const { currentProject, setCurrentProject } = useProject()
-  const [selectedProject, setSelectedProject] = useState(currentProject?.metadata || projects[0])
 
-  // Update the current project in the context when selection changes
-  useEffect(() => {
-    if (selectedProject && currentProject) {
+  // Initialize selectedProject from currentProject, but don't update it when currentProject changes
+  const [selectedProject, setSelectedProject] = useState(() => {
+    return currentProject?.metadata || projects[0]
+  })
+
+  // Only update the current project when the user explicitly selects a different project
+  const handleSelectProject = (project) => {
+    setSelectedProject(project)
+
+    if (currentProject && project.id !== currentProject.metadata.id) {
       setCurrentProject({
         ...currentProject,
         metadata: {
           ...currentProject.metadata,
-          id: selectedProject.id,
-          name: selectedProject.name,
-          description: selectedProject.description,
+          id: project.id,
+          name: project.name,
+          description: project.description,
         },
       })
     }
-  }, [selectedProject, setCurrentProject, currentProject])
+
+    setOpen(false)
+  }
 
   const handleCreateProject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -88,7 +96,7 @@ export function ProjectSelector() {
     }
 
     setProjects([...projects, newProject])
-    setSelectedProject(newProject)
+    handleSelectProject(newProject) // Use the handler to update both states
     setDialogOpen(false)
   }
 
@@ -108,14 +116,7 @@ export function ProjectSelector() {
               <CommandEmpty>No projects found.</CommandEmpty>
               <CommandGroup heading="Projects">
                 {projects.map((project) => (
-                  <CommandItem
-                    key={project.id}
-                    value={project.id}
-                    onSelect={() => {
-                      setSelectedProject(project)
-                      setOpen(false)
-                    }}
-                  >
+                  <CommandItem key={project.id} value={project.id} onSelect={() => handleSelectProject(project)}>
                     <Check
                       className={cn("mr-2 h-4 w-4", selectedProject?.id === project.id ? "opacity-100" : "opacity-0")}
                     />
