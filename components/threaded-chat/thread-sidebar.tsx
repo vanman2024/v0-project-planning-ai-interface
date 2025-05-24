@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useChat } from "@/contexts/chat-context"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -18,82 +17,77 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
-  MessageSquare,
-  CheckSquare,
-  Layers,
-  MessageCircle,
+  Hash,
   Plus,
   Search,
   MoreVertical,
   Pin,
   Pencil,
   Trash2,
+  ChevronDown,
+  Users,
+  Bot,
+  FileText,
+  Settings,
+  Inbox,
 } from "lucide-react"
 
-export function ThreadSidebar() {
-  const { threads, activeThreadId, setActiveThreadId, createThread, renameThread, pinThread, deleteThread } = useChat()
+// Mock data for threads
+const mockThreads = [
+  { id: "general", name: "General", icon: "Hash", unreadCount: 0, pinned: true },
+  { id: "project-planning", name: "Project Planning", icon: "Hash", unreadCount: 3, pinned: true },
+  { id: "task-agent", name: "Task Agent", icon: "Bot", unreadCount: 0, pinned: false },
+  { id: "feature-agent", name: "Feature Agent", icon: "Bot", unreadCount: 2, pinned: false },
+  { id: "documentation", name: "Documentation", icon: "FileText", unreadCount: 0, pinned: false },
+  { id: "team-chat", name: "Team Chat", icon: "Users", unreadCount: 5, pinned: false },
+]
 
+export function ThreadSidebar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [newThreadName, setNewThreadName] = useState("")
   const [newThreadDescription, setNewThreadDescription] = useState("")
+  const [activeThreadId, setActiveThreadId] = useState("general")
 
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
-  const [threadToRename, setThreadToRename] = useState<string | null>(null)
-  const [renameValue, setRenameValue] = useState("")
-
-  const filteredThreads = threads.filter((thread) => thread.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredThreads = mockThreads.filter((thread) => thread.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   const pinnedThreads = filteredThreads.filter((thread) => thread.pinned)
   const unpinnedThreads = filteredThreads.filter((thread) => !thread.pinned)
 
   const handleCreateThread = () => {
-    if (!newThreadName.trim()) return
-
-    const threadId = createThread(newThreadName, newThreadDescription)
-    setActiveThreadId(threadId)
+    // In a real implementation, this would create a new thread
     setIsCreateDialogOpen(false)
     setNewThreadName("")
     setNewThreadDescription("")
   }
 
-  const handleRenameThread = () => {
-    if (!threadToRename || !renameValue.trim()) return
-
-    renameThread(threadToRename, renameValue)
-    setIsRenameDialogOpen(false)
-    setThreadToRename(null)
-    setRenameValue("")
-  }
-
-  const openRenameDialog = (threadId: string, currentName: string) => {
-    setThreadToRename(threadId)
-    setRenameValue(currentName)
-    setIsRenameDialogOpen(true)
-  }
-
-  const getThreadIcon = (iconName: string) => {
-    switch (iconName) {
-      case "MessageSquare":
-        return <MessageSquare className="h-4 w-4" />
-      case "CheckSquare":
-        return <CheckSquare className="h-4 w-4" />
-      case "Layers":
-        return <Layers className="h-4 w-4" />
-      default:
-        return <MessageCircle className="h-4 w-4" />
-    }
-  }
-
   return (
-    <div className="w-64 border-r flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h2 className="font-semibold mb-2">Conversations</h2>
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+      <div className="p-3 border-b">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold text-lg">Project Planning AI</h2>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" className="flex-1 justify-start h-8">
+            <Inbox className="h-4 w-4 mr-2" />
+            Inbox
+          </Button>
+          <Button variant="ghost" size="sm" className="flex-1 justify-start h-8">
+            <Users className="h-4 w-4 mr-2" />
+            People
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-3 border-b">
         <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search threads"
-            className="pl-8"
+            className="pl-8 h-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -104,7 +98,10 @@ export function ThreadSidebar() {
         <div className="p-2">
           {pinnedThreads.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-xs font-medium text-muted-foreground mb-2 px-2">PINNED</h3>
+              <div className="flex items-center px-2 mb-1">
+                <ChevronDown className="h-4 w-4 mr-1" />
+                <h3 className="text-xs font-medium text-muted-foreground">PINNED</h3>
+              </div>
               <div className="space-y-1">
                 {pinnedThreads.map((thread) => (
                   <ThreadItem
@@ -112,9 +109,6 @@ export function ThreadSidebar() {
                     thread={thread}
                     isActive={thread.id === activeThreadId}
                     onClick={() => setActiveThreadId(thread.id)}
-                    onRename={() => openRenameDialog(thread.id, thread.name)}
-                    onPin={() => pinThread(thread.id, false)}
-                    onDelete={() => deleteThread(thread.id)}
                   />
                 ))}
               </div>
@@ -123,7 +117,10 @@ export function ThreadSidebar() {
 
           {unpinnedThreads.length > 0 && (
             <div>
-              <h3 className="text-xs font-medium text-muted-foreground mb-2 px-2">THREADS</h3>
+              <div className="flex items-center px-2 mb-1">
+                <ChevronDown className="h-4 w-4 mr-1" />
+                <h3 className="text-xs font-medium text-muted-foreground">THREADS</h3>
+              </div>
               <div className="space-y-1">
                 {unpinnedThreads.map((thread) => (
                   <ThreadItem
@@ -131,9 +128,6 @@ export function ThreadSidebar() {
                     thread={thread}
                     isActive={thread.id === activeThreadId}
                     onClick={() => setActiveThreadId(thread.id)}
-                    onRename={() => openRenameDialog(thread.id, thread.name)}
-                    onPin={() => pinThread(thread.id, true)}
-                    onDelete={() => deleteThread(thread.id)}
                   />
                 ))}
               </div>
@@ -142,7 +136,7 @@ export function ThreadSidebar() {
         </div>
       </ScrollArea>
 
-      <div className="p-3 border-t">
+      <div className="p-3 border-t mt-auto">
         <Button variant="outline" className="w-full justify-start" onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Thread
@@ -184,28 +178,6 @@ export function ThreadSidebar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Rename Thread Dialog */}
-      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename Thread</DialogTitle>
-            <DialogDescription>Give this thread a new name.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="rename-thread">Thread Name</Label>
-              <Input id="rename-thread" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRenameThread}>Rename</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -214,34 +186,33 @@ interface ThreadItemProps {
   thread: {
     id: string
     name: string
-    icon?: string
+    icon: string
     unreadCount: number
   }
   isActive: boolean
   onClick: () => void
-  onRename: () => void
-  onPin: () => void
-  onDelete: () => void
 }
 
-function ThreadItem({ thread, isActive, onClick, onRename, onPin, onDelete }: ThreadItemProps) {
-  const getThreadIcon = (iconName?: string) => {
+function ThreadItem({ thread, isActive, onClick }: ThreadItemProps) {
+  const getThreadIcon = (iconName: string) => {
     switch (iconName) {
-      case "MessageSquare":
-        return <MessageSquare className="h-4 w-4" />
-      case "CheckSquare":
-        return <CheckSquare className="h-4 w-4" />
-      case "Layers":
-        return <Layers className="h-4 w-4" />
+      case "Hash":
+        return <Hash className="h-4 w-4" />
+      case "Bot":
+        return <Bot className="h-4 w-4" />
+      case "Users":
+        return <Users className="h-4 w-4" />
+      case "FileText":
+        return <FileText className="h-4 w-4" />
       default:
-        return <MessageCircle className="h-4 w-4" />
+        return <Hash className="h-4 w-4" />
     }
   }
 
   return (
     <div
       className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group ${
-        isActive ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+        isActive ? "bg-primary/10 text-primary" : "hover:bg-muted"
       }`}
       onClick={onClick}
     >
@@ -270,29 +241,15 @@ function ThreadItem({ thread, isActive, onClick, onRename, onPin, onDelete }: Th
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                onRename()
-              }}
-            >
+            <DropdownMenuItem>
               <Pencil className="h-4 w-4 mr-2" />
               Rename
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                onPin()
-              }}
-            >
+            <DropdownMenuItem>
               <Pin className="h-4 w-4 mr-2" />
               {thread.id === "general" ? "Cannot Unpin" : thread.id.includes("pinned") ? "Unpin" : "Pin"}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
-              }}
               disabled={thread.id === "general"}
               className={thread.id === "general" ? "text-muted-foreground" : "text-destructive"}
             >
