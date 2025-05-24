@@ -27,7 +27,15 @@ export function EnhancedMessageInput({
   const [isFocused, setIsFocused] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const handleFileClick = () => {
+    // Explicitly focus and click the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File selected:", e.target.files)
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files)
       setFiles([...files, ...newFiles])
@@ -185,7 +193,7 @@ export function EnhancedMessageInput({
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleFileClick}
           >
             <Paperclip className="h-4 w-4" />
             <span className="sr-only">Attach file</span>
