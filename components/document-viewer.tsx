@@ -25,7 +25,7 @@ export type DocumentFile = {
 interface DocumentViewerProps {
   isOpen: boolean
   onClose: () => void
-  document: DocumentFile | null
+  documentFile: DocumentFile | null // Renamed from 'document' to 'documentFile'
   documents: DocumentFile[]
   currentIndex: number
   onNavigate: (index: number) => void
@@ -34,7 +34,7 @@ interface DocumentViewerProps {
 export function DocumentViewer({
   isOpen,
   onClose,
-  document,
+  documentFile, // Using the renamed prop
   documents,
   currentIndex,
   onNavigate,
@@ -42,7 +42,7 @@ export function DocumentViewer({
   const [zoomLevel, setZoomLevel] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const activeDoc = document || (documents.length > 0 ? documents[currentIndex] : null)
+  const activeDoc = documentFile || (documents.length > 0 ? documents[currentIndex] : null)
 
   const handleZoomIn = () => {
     setZoomLevel((prev) => Math.min(prev + 0.25, 3))
@@ -57,34 +57,34 @@ export function DocumentViewer({
 
     if (activeDoc.url) {
       // For files with URLs, create a download link
-      const a = document.createElement("a")
+      const a = window.document.createElement("a") // Using window.document to be explicit
       a.href = activeDoc.url
       a.download = activeDoc.name
-      document.body.appendChild(a)
+      window.document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      window.document.body.removeChild(a)
     } else if (activeDoc.content) {
       // For text content, create a blob and download
       const blob = new Blob([activeDoc.content], { type: "text/plain" })
       const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
+      const a = window.document.createElement("a") // Using window.document to be explicit
       a.href = url
       a.download = activeDoc.name
-      document.body.appendChild(a)
+      window.document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      window.document.body.removeChild(a)
       URL.revokeObjectURL(url)
     }
   }
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
+    if (!window.document.fullscreenElement) {
+      window.document.documentElement.requestFullscreen().then(() => {
         setIsFullscreen(true)
       })
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().then(() => {
+      if (window.document.exitFullscreen) {
+        window.document.exitFullscreen().then(() => {
           setIsFullscreen(false)
         })
       }
