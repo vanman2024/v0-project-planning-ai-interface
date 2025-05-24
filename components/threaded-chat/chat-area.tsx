@@ -101,6 +101,15 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
   const handleSendMessage = () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return
 
+    // Create file attachments with unique IDs and object URLs
+    const fileAttachments = attachedFiles.map((file) => ({
+      id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      url: URL.createObjectURL(file),
+    }))
+
     const newMessage = {
       id: `msg${Date.now()}`,
       content: messageInput,
@@ -114,18 +123,23 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       reactions: [],
       hasThread: false,
       threadCount: 0,
-      attachments: attachedFiles.map((file) => ({
-        id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-      })),
+      attachments: fileAttachments,
     }
 
-    setMessages([...messages, newMessage])
+    // Update messages with the new message
+    const updatedMessages = [...messages, newMessage]
+    setMessages(updatedMessages)
+
+    // Clear input and attached files
     setMessageInput("")
     setAttachedFiles([])
+
+    // Ensure scroll to bottom after state update
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 100)
   }
 
   const handleSearch = () => {
@@ -300,7 +314,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
       )}
 
       {/* Messages area */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-full">
         <div className="p-4 space-y-6">
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
@@ -336,7 +350,7 @@ export function ChatArea({ onOpenThread }: ChatAreaProps) {
                           <div className="mt-2 flex flex-wrap gap-2">
                             {message.attachments.map((attachment, index) => (
                               <Button
-                                key={index}
+                                key={`${message.id}-attachment-${index}`}
                                 variant="outline"
                                 size="sm"
                                 className="h-8 text-xs flex items-center gap-1"
