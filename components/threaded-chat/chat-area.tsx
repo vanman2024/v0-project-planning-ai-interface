@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import type { Message } from "@/types"
-import { EnhancedMessageInput } from "@/components/ui/enhanced-message-input"
+import { EnhancedMessageInput } from "./enhanced-message-input"
 
 interface ChatAreaProps {
   onSendMessage: (message: Message) => void
