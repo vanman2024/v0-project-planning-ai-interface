@@ -13,7 +13,6 @@ import { WebsiteImporter } from "./website-importer"
 import { Button } from "@/components/ui/button"
 import { MessageSquare } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { ProjectSetupChat } from "./project-setup-chat"
 
 export function CreateProjectInterface() {
   const router = useRouter()
@@ -22,6 +21,8 @@ export function CreateProjectInterface() {
     name: "",
     description: "",
     techStack: [],
+    projectType: "",
+    categories: [],
     files: [],
     repositories: [],
     links: [],
@@ -104,12 +105,6 @@ export function CreateProjectInterface() {
               </div>
             </TabsContent>
           </Tabs>
-
-          {/* Single Project Chat Interface */}
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-4">Project Assistant</h2>
-            <ProjectSetupChat projectId={projectId} projectName={projectName} />
-          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

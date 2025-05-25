@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Check, Circle, Clock, List, Table2, Columns 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { PlanDetailView, type PlanItemDetail } from "./plan-detail-view"
 
 // Helper function to parse basic markdown
 const parseMarkdown = (text: string): string => {
@@ -27,6 +28,59 @@ interface PlanItem {
   taskType?: "pre_build" | "feature" | "post_build"
 }
 
+// Convert PlanItem to PlanItemDetail
+const convertToPlanItemDetail = (item: PlanItem, parentId?: string): PlanItemDetail => {
+  return {
+    id: item.id,
+    name: item.name,
+    description: `This is a detailed description for ${item.name}. It includes information about the purpose, scope, and implementation details.`,
+    status: item.status,
+    type: item.type,
+    priority: ["high", "medium", "low"][Math.floor(Math.random() * 3)] as "high" | "medium" | "low",
+    assignees: item.status !== "planned" ? ["user1", "user2"] : [],
+    dueDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    startDate: new Date(Date.now() - Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    estimatedHours: Math.floor(Math.random() * 40) + 1,
+    actualHours: item.status === "completed" ? Math.floor(Math.random() * 40) + 1 : undefined,
+    tags: ["v1.0", "core", "sprint-3"],
+    dependencies: [],
+    children: item.children?.map((child) => child.id),
+    parentId,
+    taskType: item.taskType,
+    requirements: ["req1", "req2"],
+    comments:
+      item.status !== "planned"
+        ? [
+            {
+              id: `comment-${Math.random().toString(36).substring(7)}`,
+              author: "Alex Johnson",
+              authorAvatar: "/placeholder.svg?height=40&width=40&query=AJ",
+              content: `This ${item.type} is progressing well. We should be able to complete it on schedule.`,
+              timestamp: new Date(Date.now() - Math.random() * 5 * 24 * 60 * 60 * 1000).toISOString(),
+              reactions: { "👍": 2, "🎉": 1 },
+            },
+          ]
+        : [],
+    createdAt: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - Math.random() * 2 * 24 * 60 * 60 * 1000).toISOString(),
+    createdBy: "user1",
+  }
+}
+
+// Recursively convert the plan data to detailed items
+const convertPlanDataToDetailedItems = (item: PlanItem, parentId?: string): PlanItemDetail[] => {
+  const detailedItem = convertToPlanItemDetail(item, parentId)
+  let result = [detailedItem]
+
+  if (item.children) {
+    item.children.forEach((child) => {
+      result = [...result, ...convertPlanDataToDetailedItems(child, item.id)]
+    })
+  }
+
+  return result
+}
+
 export function PlanViewer() {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     "milestone-1": true,
@@ -35,6 +89,8 @@ export function PlanViewer() {
     "feature-1": true,
   })
   const [activeView, setActiveView] = useState<"tree" | "table" | "kanban">("tree")
+  const [selectedItem, setSelectedItem] = useState<PlanItemDetail | null>(null)
+  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
 
   const toggleItem = (id: string) => {
     setExpandedItems((prev) => ({
@@ -136,6 +192,19 @@ export function PlanViewer() {
     ],
   }
 
+  // Convert the hierarchical plan data to a flat array of detailed items
+  const allDetailedItems = convertPlanDataToDetailedItems(planData)
+
+  // Function to handle clicking on a plan item
+  const handlePlanItemClick = (item: PlanItem) => {
+    // Find the detailed version of the item
+    const detailedItem = allDetailedItems.find((detailedItem) => detailedItem.id === item.id)
+    if (detailedItem) {
+      setSelectedItem(detailedItem)
+      setIsDetailViewOpen(true)
+    }
+  }
+
   // Function to flatten the hierarchical data for table view
   const flattenPlanData = (item: PlanItem, parentPath = ""): any[] => {
     const currentPath = parentPath ? `${parentPath} > ${item.name}` : item.name
@@ -209,7 +278,15 @@ export function PlanViewer() {
       <div key={item.id} className="ml-4" style={{ marginLeft: `${depth * 1.5}rem` }}>
         <div
           className="flex items-center py-2 cursor-pointer hover:bg-muted/50 rounded-md px-2"
-          onClick={() => hasChildren && toggleItem(item.id)}
+          onClick={(e) => {
+            if (hasChildren) {
+              toggleItem(item.id)
+            } else {
+              handlePlanItemClick(item)
+            }
+            e.stopPropagation()
+          }}
+          onDoubleClick={() => handlePlanItemClick(item)}
         >
           {hasChildren && (
             <div className="mr-1">
@@ -233,120 +310,146 @@ export function PlanViewer() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle>Plan Structure</CardTitle>
-        <ToggleGroup type="single" value={activeView} onValueChange={(value) => setActiveView(value as any)}>
-          <ToggleGroupItem value="tree" aria-label="Tree View">
-            <List className="h-4 w-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="table" aria-label="Table View">
-            <Table2 className="h-4 w-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="kanban" aria-label="Kanban View">
-            <Columns className="h-4 w-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </CardHeader>
-      <CardContent>
-        {activeView === "tree" && renderPlanItem(planData)}
+    <>
+      <Card>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle>Plan Structure</CardTitle>
+          <ToggleGroup type="single" value={activeView} onValueChange={(value) => setActiveView(value as any)}>
+            <ToggleGroupItem value="tree" aria-label="Tree View">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="table" aria-label="Table View">
+              <Table2 className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="kanban" aria-label="Kanban View">
+              <Columns className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </CardHeader>
+        <CardContent>
+          {activeView === "tree" && renderPlanItem(planData)}
 
-        {activeView === "table" && (
-          <div className="overflow-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-4">Name</th>
-                  <th className="text-left py-2 px-4">Type</th>
-                  <th className="text-left py-2 px-4">Status</th>
-                  <th className="text-left py-2 px-4">Path</th>
-                </tr>
-              </thead>
-              <tbody>
-                {flatData.map((item) => (
-                  <tr key={item.id} className="border-b hover:bg-muted/50">
-                    <td className="py-2 px-4" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                    <td className="py-2 px-4 capitalize">{item.type}</td>
-                    <td className="py-2 px-4">
-                      <div className="flex items-center">
-                        {item.status === "completed" && <Check className="h-4 w-4 text-green-500 mr-2" />}
-                        {item.status === "in-progress" && <Clock className="h-4 w-4 text-blue-500 mr-2" />}
-                        {item.status === "planned" && <Circle className="h-4 w-4 text-gray-400 mr-2" />}
-                        <span className="capitalize">{item.status}</span>
-                      </div>
-                    </td>
-                    <td className="py-2 px-4 text-sm text-muted-foreground">{item.path}</td>
+          {activeView === "table" && (
+            <div className="overflow-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-4">Name</th>
+                    <th className="text-left py-2 px-4">Type</th>
+                    <th className="text-left py-2 px-4">Status</th>
+                    <th className="text-left py-2 px-4">Path</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {flatData.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-b hover:bg-muted/50 cursor-pointer"
+                      onClick={() => handlePlanItemClick(item)}
+                    >
+                      <td className="py-2 px-4" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
+                      <td className="py-2 px-4 capitalize">{item.type}</td>
+                      <td className="py-2 px-4">
+                        <div className="flex items-center">
+                          {item.status === "completed" && <Check className="h-4 w-4 text-green-500 mr-2" />}
+                          {item.status === "in-progress" && <Clock className="h-4 w-4 text-blue-500 mr-2" />}
+                          {item.status === "planned" && <Circle className="h-4 w-4 text-gray-400 mr-2" />}
+                          <span className="capitalize">{item.status}</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-4 text-sm text-muted-foreground">{item.path}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-        {activeView === "kanban" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3 flex items-center">
-                <Circle className="h-4 w-4 text-gray-400 mr-2" />
-                Planned ({kanbanData.planned.length})
-              </h3>
-              <div className="space-y-2">
-                {kanbanData.planned.map((item) => (
-                  <div key={item.id} className="border rounded-md p-3 bg-background shadow-sm">
-                    <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                    <div className="flex justify-between items-center mt-2">
-                      <Badge variant="outline" className="capitalize">
-                        {item.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{item.id}</span>
+          {activeView === "kanban" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <Circle className="h-4 w-4 text-gray-400 mr-2" />
+                  Planned ({kanbanData.planned.length})
+                </h3>
+                <div className="space-y-2">
+                  {kanbanData.planned.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handlePlanItemClick(item)}
+                    >
+                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
+                      <div className="flex justify-between items-center mt-2">
+                        <Badge variant="outline" className="capitalize">
+                          {item.type}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{item.id}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <Clock className="h-4 w-4 text-blue-500 mr-2" />
+                  In Progress ({kanbanData.inProgress.length})
+                </h3>
+                <div className="space-y-2">
+                  {kanbanData.inProgress.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handlePlanItemClick(item)}
+                    >
+                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
+                      <div className="flex justify-between items-center mt-2">
+                        <Badge variant="outline" className="capitalize">
+                          {item.type}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{item.id}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-3 flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2" />
+                  Completed ({kanbanData.completed.length})
+                </h3>
+                <div className="space-y-2">
+                  {kanbanData.completed.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handlePlanItemClick(item)}
+                    >
+                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
+                      <div className="flex justify-between items-center mt-2">
+                        <Badge variant="outline" className="capitalize">
+                          {item.type}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{item.id}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3 flex items-center">
-                <Clock className="h-4 w-4 text-blue-500 mr-2" />
-                In Progress ({kanbanData.inProgress.length})
-              </h3>
-              <div className="space-y-2">
-                {kanbanData.inProgress.map((item) => (
-                  <div key={item.id} className="border rounded-md p-3 bg-background shadow-sm">
-                    <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                    <div className="flex justify-between items-center mt-2">
-                      <Badge variant="outline" className="capitalize">
-                        {item.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{item.id}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3 flex items-center">
-                <Check className="h-4 w-4 text-green-500 mr-2" />
-                Completed ({kanbanData.completed.length})
-              </h3>
-              <div className="space-y-2">
-                {kanbanData.completed.map((item) => (
-                  <div key={item.id} className="border rounded-md p-3 bg-background shadow-sm">
-                    <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                    <div className="flex justify-between items-center mt-2">
-                      <Badge variant="outline" className="capitalize">
-                        {item.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{item.id}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Plan Detail View */}
+      <PlanDetailView
+        isOpen={isDetailViewOpen}
+        onClose={() => setIsDetailViewOpen(false)}
+        planItem={selectedItem}
+        allItems={allDetailedItems}
+      />
+    </>
   )
 }

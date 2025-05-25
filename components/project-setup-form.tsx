@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Sparkles, X, Loader2, Tag, RefreshCw, Check } from "lucide-react"
+import { Sparkles, X, Tag, Check, MessageSquare } from "lucide-react"
 import { UnifiedChatProvider } from "@/contexts/unified-chat-context"
 import { UnifiedChat } from "@/components/unified-chat"
 
@@ -58,24 +58,28 @@ const PROJECT_TYPES = [
   { id: "other", name: "Other" },
 ]
 
-// Predefined categories
-const PREDEFINED_CATEGORIES = [
-  "Frontend",
-  "Backend",
-  "Full-Stack",
-  "Mobile",
-  "Desktop",
-  "Database",
-  "API",
-  "UI/UX",
-  "DevOps",
-  "Machine Learning",
-  "Blockchain",
-  "IoT",
-  "AR/VR",
-  "Enterprise",
-  "Personal",
+// Extended categories with subcategories
+const CATEGORY_GROUPS = [
+  {
+    name: "Development Focus",
+    categories: ["Frontend", "Backend", "Full-Stack", "DevOps", "Database", "API", "Mobile", "Desktop"],
+  },
+  {
+    name: "Industry",
+    categories: ["E-Commerce", "Finance", "Healthcare", "Education", "Entertainment", "Social Media", "Enterprise"],
+  },
+  {
+    name: "Technology",
+    categories: ["AI/ML", "Blockchain", "IoT", "AR/VR", "Cloud", "Serverless", "Microservices"],
+  },
+  {
+    name: "Purpose",
+    categories: ["Productivity", "Analytics", "Communication", "Content Management", "Customer Service", "Automation"],
+  },
 ]
+
+// Flatten categories for easy access
+const PREDEFINED_CATEGORIES = CATEGORY_GROUPS.flatMap((group) => group.categories)
 
 export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectSetupFormProps) {
   const [techInput, setTechInput] = useState("")
@@ -90,20 +94,14 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
     reasoning: string
   } | null>(null)
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
+  const [selectedCategoryGroup, setSelectedCategoryGroup] = useState<string | null>(null)
 
   // Auto-generate description when project type changes
   useEffect(() => {
-    if (projectData.projectType && projectData.name) {
+    if (projectData.projectType && projectData.name && !projectData.description) {
       generateDescriptionFromProjectType(projectData.projectType, projectData.name)
     }
   }, [projectData.projectType, projectData.name])
-
-  // Auto-suggest categories when project type changes
-  useEffect(() => {
-    if (projectData.projectType) {
-      generateCategoriesFromProjectType(projectData.projectType)
-    }
-  }, [projectData.projectType])
 
   const addTechStack = () => {
     if (techInput.trim() && !projectData.techStack.includes(techInput.trim())) {
@@ -154,7 +152,7 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
 
     setIsEnhancing(true)
 
-    // Simulate AI enhancement of the description
+    // In a real implementation, this would call an AI service
     setTimeout(() => {
       const enhancedDescription = generateEnhancedDescription(projectData.name, projectData.description)
       onUpdate({ description: enhancedDescription })
@@ -167,116 +165,23 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
 
     setIsGeneratingDescription(true)
 
-    // Simulate AI generation of description based on project type
+    // In a real implementation, this would call an AI service
     setTimeout(() => {
       const description = getDescriptionByProjectType(projectType, projectName)
       onUpdate({ description })
       setIsGeneratingDescription(false)
-
-      // After generating description, suggest tech stack
-      generateTechStackFromProjectType(projectType)
     }, 1000)
   }
 
   const generateCategoriesFromProjectType = (projectType: string) => {
     setIsGeneratingCategories(true)
 
-    // Simulate AI generation of categories based on project type
+    // In a real implementation, this would call an AI service
     setTimeout(() => {
       const suggestedCategories = getCategoriesByProjectType(projectType)
       onUpdate({ categories: suggestedCategories })
       setIsGeneratingCategories(false)
     }, 1000)
-  }
-
-  const generateTechStackFromProjectType = (projectType: string) => {
-    setIsGeneratingStack(true)
-
-    // Simulate AI generation of tech stack based on project type
-    setTimeout(() => {
-      const suggestedStack = getTechStackByProjectType(projectType)
-      const reasoning = getReasoningByProjectType(projectType)
-
-      setAiSuggestions({
-        techStack: suggestedStack,
-        reasoning: reasoning,
-      })
-
-      setIsGeneratingStack(false)
-    }, 1500)
-  }
-
-  const generateTechStack = () => {
-    if (!projectData.description) {
-      return
-    }
-
-    setIsGeneratingStack(true)
-
-    // Simulate AI generation of tech stack suggestions
-    setTimeout(() => {
-      // Generate suggestions based on the project description
-      const description = projectData.description.toLowerCase()
-      let suggestedStack: string[] = []
-      let reasoning = "Based on your project description, I recommend the following technology stack:\n\n"
-
-      if (description.includes("e-commerce") || description.includes("shop") || description.includes("store")) {
-        suggestedStack = ["Next.js", "TypeScript", "Tailwind CSS", "Prisma", "PostgreSQL", "Stripe", "Redux"]
-        reasoning +=
-          "- **Next.js & TypeScript**: Provides a robust framework for building server-rendered React applications with type safety\n"
-        reasoning += "- **Tailwind CSS**: Offers utility-first styling for rapid UI development\n"
-        reasoning +=
-          "- **Prisma & PostgreSQL**: Gives you a type-safe database client with a reliable relational database\n"
-        reasoning += "- **Stripe**: Essential for handling payments in e-commerce applications\n"
-        reasoning += "- **Redux**: Helpful for managing complex application state in larger e-commerce platforms\n"
-      } else if (description.includes("blog") || description.includes("content") || description.includes("cms")) {
-        suggestedStack = ["Next.js", "TypeScript", "Tailwind CSS", "Contentful", "Vercel", "MDX"]
-        reasoning += "- **Next.js & TypeScript**: Perfect for content-heavy sites with SEO requirements\n"
-        reasoning += "- **Tailwind CSS**: Provides consistent styling with minimal effort\n"
-        reasoning += "- **Contentful**: A headless CMS that makes content management easy\n"
-        reasoning += "- **Vercel**: Optimized hosting for Next.js applications\n"
-        reasoning += "- **MDX**: Allows you to use React components in markdown for rich content\n"
-      } else if (
-        description.includes("dashboard") ||
-        description.includes("admin") ||
-        description.includes("analytics")
-      ) {
-        suggestedStack = ["React", "TypeScript", "Material UI", "React Query", "Chart.js", "Firebase", "Redux"]
-        reasoning += "- **React & TypeScript**: Provides a responsive UI framework with type safety\n"
-        reasoning += "- **Material UI**: Offers pre-built components for dashboard interfaces\n"
-        reasoning += "- **React Query**: Simplifies data fetching and caching\n"
-        reasoning += "- **Chart.js**: Essential for data visualization in analytics dashboards\n"
-        reasoning += "- **Firebase**: Provides authentication and real-time database capabilities\n"
-        reasoning += "- **Redux**: Helps manage complex application state across dashboard components\n"
-      } else if (description.includes("mobile") || description.includes("ios") || description.includes("android")) {
-        suggestedStack = ["React Native", "TypeScript", "Expo", "Redux", "Firebase", "Jest"]
-        reasoning += "- **React Native & Expo**: Allows you to build cross-platform mobile apps efficiently\n"
-        reasoning += "- **TypeScript**: Adds type safety to your mobile application\n"
-        reasoning += "- **Redux**: Manages application state across screens\n"
-        reasoning += "- **Firebase**: Provides authentication, database, and cloud functions\n"
-        reasoning += "- **Jest**: Essential for testing your mobile application\n"
-      } else {
-        // Default modern web stack
-        suggestedStack = ["Next.js", "TypeScript", "Tailwind CSS", "Prisma", "PostgreSQL", "Vercel"]
-        reasoning += "- **Next.js & TypeScript**: Provides a modern React framework with type safety\n"
-        reasoning += "- **Tailwind CSS**: Offers utility-first styling for rapid UI development\n"
-        reasoning += "- **Prisma & PostgreSQL**: Gives you a type-safe database client with a reliable database\n"
-        reasoning += "- **Vercel**: Optimized hosting for Next.js applications\n"
-      }
-
-      setAiSuggestions({
-        techStack: suggestedStack,
-        reasoning: reasoning,
-      })
-      setIsGeneratingStack(false)
-    }, 1500)
-  }
-
-  const applyAiSuggestions = () => {
-    if (aiSuggestions) {
-      onUpdate({ techStack: aiSuggestions.techStack })
-      setAiSuggestions(null)
-    }
   }
 
   // Function to generate an enhanced description based on the project name and existing description
@@ -294,7 +199,7 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
   const getDescriptionByProjectType = (projectType: string, projectName: string): string => {
     switch (projectType) {
       case "web-app":
-        return `${projectName} is a modern web application designed to provide users with a seamless and intuitive experience  is a modern web application designed to provide users with a seamless and intuitive experience. This project will focus on creating a responsive interface that works across all devices, with fast load times and smooth interactions. The application will implement secure user authentication, data persistence, and real-time updates where needed. It will be built with scalability in mind, allowing for future feature additions and increased user capacity.`
+        return `${projectName} is a modern web application designed to provide users with a seamless and intuitive experience. This project will focus on creating a responsive interface that works across all devices, with fast load times and smooth interactions. The application will implement secure user authentication, data persistence, and real-time updates where needed. It will be built with scalability in mind, allowing for future feature additions and increased user capacity.`
       case "mobile-app":
         return `${projectName} is a cross-platform mobile application designed to deliver a native-like experience on both iOS and Android devices. This project will focus on creating an intuitive user interface with smooth animations and responsive interactions. The app will implement offline capabilities, push notifications, and secure data storage. It will be optimized for performance and battery efficiency while maintaining a consistent user experience across different device sizes and operating systems.`
       case "desktop-app":
@@ -338,64 +243,6 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
     }
   }
 
-  // Function to get tech stack based on project type
-  const getTechStackByProjectType = (projectType: string): string[] => {
-    switch (projectType) {
-      case "web-app":
-        return ["React", "Next.js", "TypeScript", "Tailwind CSS", "Node.js", "MongoDB"]
-      case "mobile-app":
-        return ["React Native", "TypeScript", "Expo", "Redux", "Firebase"]
-      case "desktop-app":
-        return ["Electron", "React", "TypeScript", "SQLite", "Redux"]
-      case "api":
-        return ["Node.js", "Express", "TypeScript", "PostgreSQL", "Swagger", "Jest"]
-      case "e-commerce":
-        return ["Next.js", "TypeScript", "Tailwind CSS", "Prisma", "PostgreSQL", "Stripe"]
-      case "blog":
-        return ["Next.js", "TypeScript", "Tailwind CSS", "Contentful", "MDX", "Vercel"]
-      case "dashboard":
-        return ["React", "TypeScript", "Material UI", "Chart.js", "React Query", "Firebase"]
-      case "game":
-        return ["Unity", "C#", "Three.js", "WebGL", "Firebase"]
-      default:
-        return ["React", "TypeScript", "Node.js", "PostgreSQL"]
-    }
-  }
-
-  // Function to get reasoning based on project type
-  const getReasoningByProjectType = (projectType: string): string => {
-    switch (projectType) {
-      case "web-app":
-        return (
-          "Based on your web application project, I recommend the following technology stack:\n\n" +
-          "- **React & Next.js**: Provides a powerful framework for building modern web applications with server-side rendering\n" +
-          "- **TypeScript**: Adds type safety to your JavaScript code, reducing bugs and improving developer experience\n" +
-          "- **Tailwind CSS**: Offers utility-first styling for rapid UI development without writing custom CSS\n" +
-          "- **Node.js**: Enables JavaScript on the server-side for a unified language throughout your stack\n" +
-          "- **MongoDB**: Provides a flexible, document-based database that works well with JavaScript applications"
-        )
-      case "mobile-app":
-        return (
-          "Based on your mobile application project, I recommend the following technology stack:\n\n" +
-          "- **React Native**: Allows you to build cross-platform mobile apps with a single codebase\n" +
-          "- **TypeScript**: Adds type safety to your JavaScript code, reducing bugs in your mobile app\n" +
-          "- **Expo**: Simplifies React Native development with pre-built components and development tools\n" +
-          "- **Redux**: Provides predictable state management across your mobile application\n" +
-          "- **Firebase**: Offers authentication, real-time database, and cloud functions for mobile apps"
-        )
-      case "e-commerce":
-        return (
-          "Based on your e-commerce project, I recommend the following technology stack:\n\n" +
-          "- **Next.js & TypeScript**: Provides a robust framework for building server-rendered React applications with type safety\n" +
-          "- **Tailwind CSS**: Offers utility-first styling for rapid UI development\n" +
-          "- **Prisma & PostgreSQL**: Gives you a type-safe database client with a reliable relational database\n" +
-          "- **Stripe**: Essential for handling payments in e-commerce applications"
-        )
-      default:
-        return "Based on your project type, I recommend these technologies as they provide a solid foundation for development, with good community support and documentation. This stack balances modern features with stability and will allow you to build a scalable, maintainable application."
-    }
-  }
-
   return (
     <>
       <style jsx global>{`
@@ -427,7 +274,7 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
               <TabsTrigger value="details">Project Details</TabsTrigger>
-              <TabsTrigger value="agent">Project Agent</TabsTrigger>
+              <TabsTrigger value="agent">Project Agents</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
@@ -442,7 +289,7 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                 />
               </div>
 
-              {/* Project Type - Moved directly beneath project name */}
+              {/* Project Type */}
               <div className="space-y-2">
                 <Label htmlFor="project-type">Project Type</Label>
                 <Select value={projectData.projectType} onValueChange={(value) => onUpdate({ projectType: value })}>
@@ -457,74 +304,35 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select a project type to help our AI understand your project better. You can refine the details with
+                  the Project Agent.
+                </p>
               </div>
 
-              {/* Project Description - Auto-generated based on project type */}
+              {/* Project Description */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="project-description">Project Description</Label>
                   <div className="flex gap-2">
-                    {projectData.description && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={enhanceDescription}
-                        disabled={isEnhancing || !projectData.name || !projectData.description}
-                        className="h-8 gap-1"
-                      >
-                        {isEnhancing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Enhancing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4" />
-                            <span>Enhance with AI</span>
-                          </>
-                        )}
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (projectData.projectType && projectData.name) {
-                          generateDescriptionFromProjectType(projectData.projectType, projectData.name)
-                        }
-                      }}
-                      disabled={isGeneratingDescription || !projectData.projectType || !projectData.name}
-                      className="h-8 gap-1"
-                    >
-                      {isGeneratingDescription ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Generating...</span>
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4" />
-                          <span>Regenerate</span>
-                        </>
-                      )}
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab("agent")} className="h-8 gap-1">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Ask AI for Help</span>
                     </Button>
                   </div>
                 </div>
                 <Textarea
                   id="project-description"
-                  placeholder={
-                    isGeneratingDescription
-                      ? "Generating description..."
-                      : "Description will be generated based on project type..."
-                  }
+                  placeholder="Describe your project in detail. What problem does it solve? Who is it for? What are the main features?"
                   rows={4}
                   value={projectData.description}
                   onChange={(e) => onUpdate({ description: e.target.value })}
                   className={isGeneratingDescription ? "opacity-50" : ""}
                 />
-                {isGeneratingDescription && (
-                  <p className="text-xs text-muted-foreground">Generating description based on project type...</p>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  Provide a detailed description or switch to the Project Agents tab for AI assistance in defining your
+                  project.
+                </p>
               </div>
 
               {/* Due Date */}
@@ -538,44 +346,14 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                 />
               </div>
 
-              {/* Categories - AI-driven */}
+              {/* Categories */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="categories">Categories</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowCategoryDialog(true)}
-                      className="h-8 gap-1"
-                    >
-                      <Tag className="h-4 w-4" />
-                      <span>Add Category</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (projectData.projectType) {
-                          generateCategoriesFromProjectType(projectData.projectType)
-                        }
-                      }}
-                      disabled={isGeneratingCategories || !projectData.projectType}
-                      className="h-8 gap-1"
-                    >
-                      {isGeneratingCategories ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Generating...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4" />
-                          <span>Suggest Categories</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowCategoryDialog(true)} className="h-8 gap-1">
+                    <Tag className="h-4 w-4" />
+                    <span>Add Categories</span>
+                  </Button>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -593,9 +371,7 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                   ))}
                   {!(projectData.categories || []).length && (
                     <span className="text-sm text-muted-foreground">
-                      {isGeneratingCategories
-                        ? "Generating categories based on project type..."
-                        : "No categories added yet. Categories will be suggested based on project type."}
+                      No categories added yet. Add categories to help organize your project.
                     </span>
                   )}
                 </div>
@@ -605,24 +381,9 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="tech-stack">Technology Stack</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generateTechStack}
-                    disabled={isGeneratingStack || !projectData.description}
-                    className="h-8 gap-1"
-                  >
-                    {isGeneratingStack ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4" />
-                        <span>Suggest Stack</span>
-                      </>
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab("agent")} className="h-8 gap-1">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Ask AI for Recommendations</span>
                   </Button>
                 </div>
                 <div className="flex gap-2">
@@ -637,37 +398,10 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                     Add
                   </Button>
                 </div>
-
-                {aiSuggestions && (
-                  <Alert className="mt-2">
-                    <div className="flex flex-col space-y-2">
-                      <AlertDescription className="mt-2">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="mb-2 font-medium flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            AI Suggested Technology Stack
-                          </div>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {aiSuggestions.techStack.map((tech) => (
-                              <Badge key={tech} variant="secondary" className="flex items-center gap-1">
-                                {tech}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="text-xs text-muted-foreground whitespace-pre-line">
-                            {aiSuggestions.reasoning}
-                          </div>
-                          <div className="flex justify-end mt-2">
-                            <Button size="sm" onClick={applyAiSuggestions} className="flex items-center gap-1">
-                              <Check className="h-4 w-4" />
-                              Apply Suggestions
-                            </Button>
-                          </div>
-                        </div>
-                      </AlertDescription>
-                    </div>
-                  </Alert>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  Add technologies you plan to use or switch to the Project Agents tab for AI recommendations based on
+                  your project details.
+                </p>
 
                 <div className="flex flex-wrap gap-2 mt-2">
                   {projectData.techStack.map((tech) => (
@@ -681,31 +415,37 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
                   ))}
                 </div>
               </div>
-              <div className="mt-6">
-                <h3 className="text-lg font-medium mb-2">Chat Preview</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  As you fill out the form, our AI assistant will be ready to help you plan your project. You can chat
-                  with the assistant at any time during the setup process.
-                </p>
-                <div className="h-24 bg-muted/30 rounded-md border border-dashed flex items-center justify-center">
-                  <span className="text-sm text-muted-foreground">
-                    Complete the form to start chatting with your project assistant
-                  </span>
+
+              <Alert className="mt-6">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="font-medium">AI-Powered Project Planning</span>
                 </div>
-              </div>
+                <AlertDescription className="mt-2">
+                  Switch to the <strong>Project Agents</strong> tab to chat with our AI assistant. The assistant can
+                  help you:
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>Refine your project description</li>
+                    <li>Suggest appropriate technologies</li>
+                    <li>Recommend project structure</li>
+                    <li>Answer questions about development approaches</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
             </TabsContent>
 
-            <TabsContent value="agent" className="h-[500px] flex flex-col">
-              {/* Replace the old agent chat with our new unified chat system */}
-              <UnifiedChatProvider>
-                <UnifiedChat
-                  projectId={
-                    projectData.name ? `project-${projectData.name.toLowerCase().replace(/\s+/g, "-")}` : undefined
-                  }
-                  compact={true}
-                  showContinueInMainChat={true}
-                />
-              </UnifiedChatProvider>
+            <TabsContent value="agent" className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <UnifiedChatProvider>
+                  <UnifiedChat
+                    projectId={
+                      projectData.name ? `project-${projectData.name.toLowerCase().replace(/\s+/g, "-")}` : undefined
+                    }
+                    compact={true}
+                    showContinueInMainChat={true}
+                  />
+                </UnifiedChatProvider>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -715,54 +455,72 @@ export function ProjectSetupForm({ projectData, onUpdate, onComplete }: ProjectS
 
         {/* Category Dialog */}
         <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add Category</DialogTitle>
-              <DialogDescription>Add a category to help organize your project</DialogDescription>
+              <DialogTitle>Add Categories</DialogTitle>
+              <DialogDescription>Add categories to help organize your project</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="category">Category Name</Label>
-                <Input
-                  id="category"
-                  placeholder="Frontend, Backend, Mobile..."
-                  value={categoryInput}
-                  onChange={(e) => setCategoryInput(e.target.value)}
-                  onKeyDown={handleCategoryKeyDown}
-                />
+                <Label htmlFor="category">Custom Category</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="category"
+                    placeholder="Enter a custom category..."
+                    value={categoryInput}
+                    onChange={(e) => setCategoryInput(e.target.value)}
+                    onKeyDown={handleCategoryKeyDown}
+                  />
+                  <Button
+                    onClick={() => {
+                      if (categoryInput.trim()) {
+                        addCategory(categoryInput)
+                      }
+                    }}
+                    disabled={!categoryInput.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
               </div>
-              <div>
+
+              <div className="space-y-4">
                 <Label>Suggested Categories</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {PREDEFINED_CATEGORIES.filter(
-                    (category) => !projectData.categories || !projectData.categories.includes(category),
-                  )
-                    .slice(0, 8)
-                    .map((category) => (
-                      <Badge
-                        key={category}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-secondary"
-                        onClick={() => addCategory(category)}
-                      >
-                        {category}
-                      </Badge>
-                    ))}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {CATEGORY_GROUPS.map((group) => (
+                    <div key={group.name} className="space-y-2">
+                      <h4 className="text-sm font-medium">{group.name}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {group.categories.map((category) => {
+                          const isSelected = projectData.categories?.includes(category)
+                          return (
+                            <Badge
+                              key={category}
+                              variant={isSelected ? "default" : "outline"}
+                              className={`cursor-pointer ${isSelected ? "" : "hover:bg-secondary"}`}
+                              onClick={() => {
+                                if (isSelected) {
+                                  removeCategory(category)
+                                } else {
+                                  addCategory(category)
+                                }
+                              }}
+                            >
+                              {isSelected && <Check className="h-3 w-3 mr-1" />}
+                              {category}
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  addCategory(categoryInput)
-                  setShowCategoryDialog(false)
-                }}
-                disabled={!categoryInput.trim()}
-              >
-                Add Category
+                Done
               </Button>
             </DialogFooter>
           </DialogContent>
