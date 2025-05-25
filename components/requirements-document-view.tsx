@@ -4,14 +4,11 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   FileText,
   ChevronDown,
@@ -20,91 +17,23 @@ import {
   Edit,
   Trash2,
   Link,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
   FileCheck,
   MoreHorizontal,
   Search,
   Filter,
   ArrowUpDown,
-  ExternalLink,
+  Clock,
+  AlertCircle,
   MessageSquare,
-  Calendar,
-  Users,
-  Tag,
   Paperclip,
-  Layers,
-  GitBranch,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
-
-// Types
-interface Requirement {
-  id: string
-  title: string
-  description: string
-  priority: "high" | "medium" | "low"
-  status: "approved" | "pending" | "rejected"
-  category: "functional" | "non-functional" | "technical" | "business"
-  acceptanceCriteria: AcceptanceCriteria[]
-  linkedItems: LinkedItem[]
-  comments: Comment[]
-  attachments: Attachment[]
-  createdBy: string
-  createdAt: string
-  updatedAt: string
-  completionPercentage: number
-  assignees: string[]
-  tags: string[]
-  dueDate?: string
-  parentId?: string
-  children?: string[]
-}
-
-interface AcceptanceCriteria {
-  id: string
-  description: string
-  completed: boolean
-}
-
-interface LinkedItem {
-  id: string
-  type: "task" | "feature" | "plan" | "document"
-  title: string
-  status: "completed" | "in-progress" | "planned" | "blocked"
-}
-
-interface Comment {
-  id: string
-  author: string
-  authorAvatar?: string
-  content: string
-  timestamp: string
-  reactions?: { [key: string]: number }
-}
-
-interface Attachment {
-  id: string
-  name: string
-  type: string
-  size: number
-  url: string
-  uploadedBy: string
-  uploadedAt: string
-}
-
-interface UserType {
-  id: string
-  name: string
-  avatar?: string
-  role: string
-}
+import { RequirementDetailView, type Requirement } from "./requirement-detail-view"
 
 // Mock data for users
-const users: UserType[] = [
+const users: { id: string; name: string; avatar?: string; role: string }[] = [
   {
     id: "user1",
     name: "Alex Johnson",
@@ -404,7 +333,7 @@ const mockRequirements: Requirement[] = [
 ]
 
 // Helper function to get user by ID
-const getUserById = (id: string): UserType => {
+const getUserById = (id: string) => {
   return users.find((user) => user.id === id) || { id: "", name: "Unknown User", role: "Unknown" }
 }
 
@@ -416,20 +345,6 @@ const formatDate = (dateString?: string): string => {
     month: "short",
     day: "numeric",
   })
-}
-
-// Helper function to get status icon
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />
-    case "in-progress":
-      return <Clock className="h-4 w-4 text-blue-500" />
-    case "blocked":
-      return <AlertCircle className="h-4 w-4 text-red-500" />
-    default:
-      return <Clock className="h-4 w-4 text-gray-400" />
-  }
 }
 
 // Helper function to get requirement status icon
@@ -513,12 +428,26 @@ export function RequirementsDocumentView() {
     req3: false,
   })
   const [activeTab, setActiveTab] = useState("all")
+  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null)
+  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
 
   const toggleRequirementExpanded = (id: string) => {
     setExpandedRequirements((prev) => ({
       ...prev,
       [id]: !prev[id],
     }))
+  }
+
+  const handleRequirementClick = (requirement: Requirement) => {
+    setSelectedRequirement(requirement)
+    setIsDetailViewOpen(true)
+  }
+
+  const handleRequirementUpdate = (updatedRequirement: Requirement) => {
+    setRequirements((prevRequirements) =>
+      prevRequirements.map((req) => (req.id === updatedRequirement.id ? updatedRequirement : req)),
+    )
+    setSelectedRequirement(updatedRequirement)
   }
 
   // Filter requirements based on search and active tab
@@ -592,6 +521,7 @@ export function RequirementsDocumentView() {
                 requirement={requirement}
                 isExpanded={expandedRequirements[requirement.id] || false}
                 onToggleExpand={() => toggleRequirementExpanded(requirement.id)}
+                onRequirementClick={handleRequirementClick}
                 childRequirements={getChildRequirements(requirement.id)}
               />
             ))
@@ -604,6 +534,15 @@ export function RequirementsDocumentView() {
           )}
         </div>
       </ScrollArea>
+
+      {/* Requirement Detail View */}
+      <RequirementDetailView
+        isOpen={isDetailViewOpen}
+        onClose={() => setIsDetailViewOpen(false)}
+        requirement={selectedRequirement}
+        allRequirements={requirements}
+        onUpdate={handleRequirementUpdate}
+      />
     </div>
   )
 }
@@ -612,15 +551,20 @@ interface RequirementBlockProps {
   requirement: Requirement
   isExpanded: boolean
   onToggleExpand: () => void
+  onRequirementClick: (requirement: Requirement) => void
   childRequirements: Requirement[]
 }
 
-function RequirementBlock({ requirement, isExpanded, onToggleExpand, childRequirements }: RequirementBlockProps) {
-  const [activeTab, setActiveTab] = useState("details")
-
+function RequirementBlock({
+  requirement,
+  isExpanded,
+  onToggleExpand,
+  onRequirementClick,
+  childRequirements,
+}: RequirementBlockProps) {
   return (
     <Card
-      className="border-l-4"
+      className="border-l-4 hover:shadow-md transition-shadow"
       style={{
         borderLeftColor:
           requirement.priority === "high" ? "#ef4444" : requirement.priority === "medium" ? "#f59e0b" : "#22c55e",
@@ -640,7 +584,10 @@ function RequirementBlock({ requirement, isExpanded, onToggleExpand, childRequir
                 <div className="w-4" />
               )}
             </button>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:text-primary"
+              onClick={() => onRequirementClick(requirement)}
+            >
               {getRequirementStatusIcon(requirement.status)}
               <CardTitle className="text-lg">{requirement.title}</CardTitle>
             </div>
@@ -657,17 +604,13 @@ function RequirementBlock({ requirement, isExpanded, onToggleExpand, childRequir
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRequirementClick(requirement)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link className="h-4 w-4 mr-2" />
                   Link Item
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <GitBranch className="h-4 w-4 mr-2" />
-                  Add Sub-Requirement
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-red-600">
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -677,331 +620,77 @@ function RequirementBlock({ requirement, isExpanded, onToggleExpand, childRequir
             </DropdownMenu>
           </div>
         </div>
-        <CardDescription>{requirement.description}</CardDescription>
+        <CardDescription className="cursor-pointer hover:text-primary" onClick={() => onRequirementClick(requirement)}>
+          {requirement.description}
+        </CardDescription>
       </CardHeader>
 
       <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
         <CollapsibleContent>
           <CardContent className="pt-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-4 mb-4">
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="linked-items">Linked Items ({requirement.linkedItems.length})</TabsTrigger>
-                <TabsTrigger value="comments">Comments ({requirement.comments.length})</TabsTrigger>
-                <TabsTrigger value="attachments">Attachments ({requirement.attachments.length})</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Dates
-                    </h4>
-                    <div className="text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Created:</span>
-                        <span>{formatDate(requirement.createdAt)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Updated:</span>
-                        <span>{formatDate(requirement.updatedAt)}</span>
-                      </div>
-                      {requirement.dueDate && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Due:</span>
-                          <span>{formatDate(requirement.dueDate)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      People
-                    </h4>
-                    <div className="text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Created by:</span>
-                        <span>{getUserById(requirement.createdBy).name}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Assignees:</span>
-                        <div className="flex -space-x-2">
-                          {requirement.assignees.map((userId) => {
-                            const user = getUserById(userId)
-                            return (
-                              <TooltipProvider key={userId}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Avatar className="h-6 w-6 border-2 border-background">
-                                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                      <AvatarFallback>
-                                        {user.name
-                                          .split(" ")
-                                          .map((n) => n[0])
-                                          .join("")}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>
-                                      {user.name} ({user.role})
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <Tag className="h-4 w-4" />
-                      Tags
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {requirement.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Completion:</span>
+                  <span className="text-sm">{requirement.completionPercentage}%</span>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-medium">Completion</h4>
-                    <span className="text-sm font-medium">{requirement.completionPercentage}%</span>
-                  </div>
-                  <Progress value={requirement.completionPercentage} className="h-2" />
+                <div className="flex -space-x-2">
+                  {requirement.assignees.map((userId) => {
+                    const user = getUserById(userId)
+                    return (
+                      <TooltipProvider key={userId}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Avatar className="h-6 w-6 border-2 border-background">
+                              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                              <AvatarFallback>
+                                {user.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {user.name} ({user.role})
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  })}
                 </div>
-
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Acceptance Criteria</h4>
-                  <div className="space-y-2 border rounded-md p-3">
-                    {requirement.acceptanceCriteria.map((criteria) => (
-                      <div key={criteria.id} className="flex items-start gap-2">
-                        <Checkbox id={criteria.id} checked={criteria.completed} className="mt-0.5" />
-                        <label
-                          htmlFor={criteria.id}
-                          className={`text-sm ${criteria.completed ? "line-through text-muted-foreground" : ""}`}
-                        >
-                          {criteria.description}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="linked-items" className="space-y-4">
-                {requirement.linkedItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {requirement.linkedItems.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between border rounded-md p-3">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(item.status)}
-                          <span className="font-medium">{item.title}</span>
-                          <Badge variant="outline" className="capitalize">
-                            {item.type}
-                          </Badge>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Link className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>No linked items</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Link Item
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="comments" className="space-y-4">
-                {requirement.comments.length > 0 ? (
-                  <div className="space-y-4">
-                    {requirement.comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.authorAvatar || "/placeholder.svg"} alt={comment.author} />
-                          <AvatarFallback>
-                            {comment.author
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                            <div className="font-medium">{comment.author}</div>
-                            <div className="text-xs text-muted-foreground mt-1 sm:mt-0">
-                              {new Date(comment.timestamp).toLocaleString()}
-                            </div>
-                          </div>
-                          <div className="mt-1">{comment.content}</div>
-                          {comment.reactions && Object.keys(comment.reactions).length > 0 && (
-                            <div className="flex gap-1 mt-2">
-                              {Object.entries(comment.reactions).map(([reaction, count]) => (
-                                <Badge key={reaction} variant="outline" className="text-xs">
-                                  {reaction} {count}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-
-                    <Separator />
-
-                    <div className="space-y-2">
-                      <Textarea placeholder="Add a comment..." rows={2} />
-                      <div className="flex justify-end">
-                        <Button size="sm">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Comment
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>No comments yet</p>
-                    <div className="space-y-2 mt-4 max-w-md mx-auto">
-                      <Textarea placeholder="Add a comment..." rows={2} />
-                      <div className="flex justify-end">
-                        <Button size="sm">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Comment
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="attachments" className="space-y-4">
-                {requirement.attachments.length > 0 ? (
-                  <div className="space-y-2">
-                    {requirement.attachments.map((attachment) => (
-                      <div key={attachment.id} className="flex items-center justify-between border rounded-md p-3">
-                        <div className="flex items-center gap-2">
-                          <Paperclip className="h-4 w-4" />
-                          <span className="font-medium">{attachment.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {(attachment.size / 1024).toFixed(0)} KB
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Paperclip className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>No attachments</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Attachment
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-
-          {/* Child Requirements */}
-          {childRequirements.length > 0 && (
-            <div className="px-6 pb-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-muted-foreground" />
-                <h4 className="text-sm font-medium">Sub-Requirements</h4>
               </div>
-              <div className="pl-4 border-l space-y-3">
-                {childRequirements.map((childReq) => (
-                  <Card
-                    key={childReq.id}
-                    className="border-l-4"
-                    style={{
-                      borderLeftColor:
-                        childReq.priority === "high"
-                          ? "#ef4444"
-                          : childReq.priority === "medium"
-                            ? "#f59e0b"
-                            : "#22c55e",
-                    }}
-                  >
-                    <CardHeader className="py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getRequirementStatusIcon(childReq.status)}
-                          <CardTitle className="text-base">{childReq.title}</CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getPriorityBadge(childReq.priority)}
-                          <Button variant="ghost" size="sm">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-2">
-                          <Progress value={childReq.completionPercentage} className="h-2 w-24" />
-                          <span className="text-xs">{childReq.completionPercentage}%</span>
-                        </div>
-                        <div className="flex -space-x-2">
-                          {childReq.assignees.map((userId) => {
-                            const user = getUserById(userId)
-                            return (
-                              <TooltipProvider key={userId}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Avatar className="h-6 w-6 border-2 border-background">
-                                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                      <AvatarFallback>
-                                        {user.name
-                                          .split(" ")
-                                          .map((n) => n[0])
-                                          .join("")}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>
-                                      {user.name} ({user.role})
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
+              <Progress value={requirement.completionPercentage} className="h-2" />
             </div>
-          )}
+
+            {/* Child Requirements */}
+            {childRequirements.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <h4 className="text-sm font-medium">Sub-Requirements</h4>
+                <div className="pl-4 border-l space-y-2">
+                  {childRequirements.map((childReq) => (
+                    <div
+                      key={childReq.id}
+                      className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                      onClick={() => onRequirementClick(childReq)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {getRequirementStatusIcon(childReq.status)}
+                        <span className="font-medium">{childReq.title}</span>
+                        {getPriorityBadge(childReq.priority)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress value={childReq.completionPercentage} className="h-2 w-20" />
+                        <span className="text-xs">{childReq.completionPercentage}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
         </CollapsibleContent>
       </Collapsible>
 

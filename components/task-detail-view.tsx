@@ -1,13 +1,9 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
-import { CardDescription } from "@/components/ui/card"
-
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -28,7 +24,6 @@ import {
   Check,
   Circle,
   ClockIcon,
-  ExternalLink,
   Unlink,
   FileCheck,
   ChevronDown,
@@ -36,6 +31,7 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
+import { RequirementDetailView, type Requirement } from "./requirement-detail-view"
 
 // Types for task items
 export interface TaskDetail {
@@ -78,21 +74,6 @@ interface UserType {
   role: string
 }
 
-interface Requirement {
-  id: string
-  title: string
-  description: string
-  priority: "high" | "medium" | "low"
-  status: "approved" | "pending" | "rejected"
-  category: "functional" | "non-functional" | "technical" | "business"
-  acceptanceCriteria?: string[]
-  linkedTasks?: string[]
-  createdBy: string
-  createdAt: string
-  updatedAt: string
-  completionPercentage?: number
-}
-
 // Mock data for users
 const users: UserType[] = [
   {
@@ -107,7 +88,7 @@ const users: UserType[] = [
 ]
 
 // Enhanced mock data for requirements with more details
-const requirements: Requirement[] = [
+const mockRequirements: Requirement[] = [
   {
     id: "req1",
     title: "User Authentication",
@@ -116,17 +97,69 @@ const requirements: Requirement[] = [
     status: "approved",
     category: "functional",
     acceptanceCriteria: [
-      "Users can register with email and password",
-      "Password must meet security requirements (8+ chars, special chars)",
-      "Users can login with Google and GitHub OAuth",
-      "Session management with JWT tokens",
-      "Password reset functionality via email",
+      {
+        id: "ac1",
+        description: "Users can register with email and password",
+        completed: true,
+      },
+      {
+        id: "ac2",
+        description: "Password must meet security requirements (8+ chars, special chars)",
+        completed: true,
+      },
+      {
+        id: "ac3",
+        description: "Users can login with Google and GitHub OAuth",
+        completed: false,
+      },
+      {
+        id: "ac4",
+        description: "Session management with JWT tokens",
+        completed: true,
+      },
+      {
+        id: "ac5",
+        description: "Password reset functionality via email",
+        completed: false,
+      },
     ],
-    linkedTasks: ["task1", "task2", "task5"],
+    linkedItems: [
+      {
+        id: "task1",
+        type: "task",
+        title: "Implement user registration",
+        status: "completed",
+      },
+      {
+        id: "task2",
+        type: "task",
+        title: "Implement password validation",
+        status: "completed",
+      },
+      {
+        id: "task5",
+        type: "task",
+        title: "Implement OAuth providers",
+        status: "in-progress",
+      },
+    ],
+    comments: [
+      {
+        id: "comment1",
+        author: "Alex Johnson",
+        authorAvatar: "/placeholder.svg?height=40&width=40&query=AJ",
+        content: "We should prioritize the OAuth implementation for the next sprint.",
+        timestamp: "2024-04-10T14:30:00Z",
+        reactions: { "👍": 2, "🚀": 1 },
+      },
+    ],
+    attachments: [],
     createdBy: "user1",
     createdAt: "2024-01-15T10:00:00Z",
     updatedAt: "2024-01-20T14:30:00Z",
     completionPercentage: 75,
+    assignees: ["user2", "user4"],
+    tags: ["security", "user-experience", "core-feature"],
   },
   {
     id: "req2",
@@ -136,93 +169,49 @@ const requirements: Requirement[] = [
     status: "approved",
     category: "technical",
     acceptanceCriteria: [
-      "Use AES-256 encryption for data at rest",
-      "Implement TLS 1.3 for all API communications",
-      "Encrypt PII fields in database",
-      "Secure key management system",
+      {
+        id: "ac2.1",
+        description: "Use AES-256 encryption for data at rest",
+        completed: true,
+      },
+      {
+        id: "ac2.2",
+        description: "Implement TLS 1.3 for all API communications",
+        completed: true,
+      },
+      {
+        id: "ac2.3",
+        description: "Encrypt PII fields in database",
+        completed: false,
+      },
+      {
+        id: "ac2.4",
+        description: "Secure key management system",
+        completed: false,
+      },
     ],
-    linkedTasks: ["task3", "task4"],
+    linkedItems: [
+      {
+        id: "task3",
+        type: "task",
+        title: "Implement database encryption",
+        status: "in-progress",
+      },
+      {
+        id: "task4",
+        type: "task",
+        title: "Configure TLS for API endpoints",
+        status: "completed",
+      },
+    ],
+    comments: [],
+    attachments: [],
     createdBy: "user2",
     createdAt: "2024-01-10T09:00:00Z",
     updatedAt: "2024-01-18T11:00:00Z",
     completionPercentage: 60,
-  },
-  {
-    id: "req3",
-    title: "Mobile Responsiveness",
-    description: "All UI components must be fully responsive and work on mobile devices.",
-    priority: "medium",
-    status: "approved",
-    category: "non-functional",
-    acceptanceCriteria: [
-      "Support viewport sizes from 320px to 4K",
-      "Touch-friendly interface elements",
-      "Optimized images for different screen sizes",
-      "Progressive web app capabilities",
-    ],
-    linkedTasks: ["task6", "task7", "task8"],
-    createdBy: "user3",
-    createdAt: "2024-01-12T13:00:00Z",
-    updatedAt: "2024-01-22T16:00:00Z",
-    completionPercentage: 90,
-  },
-  {
-    id: "req4",
-    title: "Performance Metrics",
-    description: "System must load within 3 seconds on standard connections.",
-    priority: "medium",
-    status: "pending",
-    category: "non-functional",
-    acceptanceCriteria: [
-      "Initial page load under 3 seconds on 3G",
-      "Time to interactive under 5 seconds",
-      "Lighthouse performance score > 90",
-      "API response time < 200ms for 95th percentile",
-    ],
-    linkedTasks: ["task9"],
-    createdBy: "user2",
-    createdAt: "2024-01-20T10:00:00Z",
-    updatedAt: "2024-01-25T14:00:00Z",
-    completionPercentage: 30,
-  },
-  {
-    id: "req5",
-    title: "Multi-language Support",
-    description: "Application must support multiple languages for international users.",
-    priority: "low",
-    status: "pending",
-    category: "functional",
-    acceptanceCriteria: [
-      "Support for English, Spanish, French, and German",
-      "RTL language support for Arabic",
-      "Dynamic language switching",
-      "Localized date and number formats",
-    ],
-    linkedTasks: [],
-    createdBy: "user1",
-    createdAt: "2024-01-25T11:00:00Z",
-    updatedAt: "2024-01-25T11:00:00Z",
-    completionPercentage: 0,
-  },
-  {
-    id: "req6",
-    title: "Audit Logging",
-    description: "System must maintain comprehensive audit logs for all user actions.",
-    priority: "high",
-    status: "approved",
-    category: "business",
-    acceptanceCriteria: [
-      "Log all authentication events",
-      "Track data modifications with before/after values",
-      "Immutable log storage",
-      "Log retention for 7 years",
-      "Export logs in standard formats",
-    ],
-    linkedTasks: ["task10", "task11"],
-    createdBy: "user4",
-    createdAt: "2024-01-08T08:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z",
-    completionPercentage: 45,
+    assignees: ["user2"],
+    tags: ["security", "compliance"],
   },
 ]
 
@@ -234,16 +223,23 @@ const getUserById = (id: string): UserType => {
 // Helper function to get requirement by ID
 const getRequirementById = (id: string): Requirement => {
   return (
-    requirements.find((req) => req.id === id) || {
+    mockRequirements.find((req) => req.id === id) || {
       id: "",
       title: "Unknown Requirement",
       description: "",
       priority: "medium",
       status: "pending",
       category: "functional",
+      acceptanceCriteria: [],
+      linkedItems: [],
+      comments: [],
+      attachments: [],
       createdBy: "",
       createdAt: "",
       updatedAt: "",
+      completionPercentage: 0,
+      assignees: [],
+      tags: [],
     }
   )
 }
@@ -317,38 +313,6 @@ const getRequirementStatusIcon = (status: string) => {
   }
 }
 
-// Helper function to get category badge
-const getCategoryBadge = (category: string) => {
-  switch (category) {
-    case "functional":
-      return (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-          Functional
-        </Badge>
-      )
-    case "non-functional":
-      return (
-        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-          Non-Functional
-        </Badge>
-      )
-    case "technical":
-      return (
-        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-          Technical
-        </Badge>
-      )
-    case "business":
-      return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-          Business
-        </Badge>
-      )
-    default:
-      return <Badge variant="outline">Other</Badge>
-  }
-}
-
 export function TaskDetailView({
   isOpen,
   onClose,
@@ -364,6 +328,8 @@ export function TaskDetailView({
   const [isEditing, setIsEditing] = useState(false)
   const [editedTask, setEditedTask] = useState<TaskDetail | null>(null)
   const [expandedRequirements, setExpandedRequirements] = useState<Record<string, boolean>>({})
+  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null)
+  const [isRequirementDetailOpen, setIsRequirementDetailOpen] = useState(false)
 
   useEffect(() => {
     if (task) {
@@ -407,6 +373,11 @@ export function TaskDetailView({
       ...prev,
       [reqId]: !prev[reqId],
     }))
+  }
+
+  const handleRequirementClick = (requirement: Requirement) => {
+    setSelectedRequirement(requirement)
+    setIsRequirementDetailOpen(true)
   }
 
   const handleSave = () => {
@@ -535,17 +506,21 @@ export function TaskDetailView({
                       {linkedRequirements.map((req) => (
                         <Card
                           key={req.id}
-                          className="border-l-4"
+                          className="border-l-4 hover:shadow-md transition-shadow cursor-pointer"
                           style={{
                             borderLeftColor:
                               req.priority === "high" ? "#ef4444" : req.priority === "medium" ? "#f59e0b" : "#22c55e",
                           }}
+                          onClick={() => handleRequirementClick(req)}
                         >
                           <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => toggleRequirementExpanded(req.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleRequirementExpanded(req.id)
+                                  }}
                                   className="p-1 rounded-md hover:bg-muted"
                                 >
                                   {expandedRequirements[req.id] ? (
@@ -560,15 +535,18 @@ export function TaskDetailView({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  {getPriorityBadge(req.priority)}
-                                  {getCategoryBadge(req.category)}
-                                </div>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <div className="flex items-center gap-1">{getPriorityBadge(req.priority)}</div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    // Unlink requirement logic would go here
+                                    console.log("Unlink requirement:", req.id)
+                                  }}
+                                >
                                   <Unlink className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <ExternalLink className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
@@ -590,27 +568,21 @@ export function TaskDetailView({
                                   <div className="space-y-2">
                                     <h4 className="text-sm font-medium">Acceptance Criteria:</h4>
                                     <div className="space-y-1 border rounded-md p-3">
-                                      {req.acceptanceCriteria.map((criteria, index) => (
-                                        <div key={index} className="flex items-start gap-2">
-                                          <Checkbox className="mt-0.5" />
-                                          <span className="text-sm">{criteria}</span>
+                                      {req.acceptanceCriteria.map((criteria) => (
+                                        <div key={criteria.id} className="flex items-start gap-2">
+                                          <Checkbox className="mt-0.5" checked={criteria.completed} disabled />
+                                          <span
+                                            className={`text-sm ${
+                                              criteria.completed ? "line-through text-muted-foreground" : ""
+                                            }`}
+                                          >
+                                            {criteria.description}
+                                          </span>
                                         </div>
                                       ))}
                                     </div>
                                   </div>
                                 )}
-
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                  <span>Created by {getUserById(req.createdBy).name}</span>
-                                  <span>•</span>
-                                  <span>Updated {formatDate(req.updatedAt)}</span>
-                                  {req.linkedTasks && req.linkedTasks.length > 0 && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{req.linkedTasks.length} linked tasks</span>
-                                    </>
-                                  )}
-                                </div>
                               </CardContent>
                             </CollapsibleContent>
                           </Collapsible>
@@ -619,10 +591,12 @@ export function TaskDetailView({
                             <div className="flex items-center justify-between w-full">
                               <div>ID: {req.id}</div>
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  <Link className="h-3 w-3" />
-                                  <span>{req.linkedTasks?.length || 0}</span>
-                                </div>
+                                {req.linkedItems.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <Link className="h-3 w-3" />
+                                    <span>{req.linkedItems.length}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </CardFooter>
@@ -656,6 +630,14 @@ export function TaskDetailView({
           </div>
         </Tabs>
       </DialogContent>
+
+      {/* Requirement Detail View */}
+      <RequirementDetailView
+        isOpen={isRequirementDetailOpen}
+        onClose={() => setIsRequirementDetailOpen(false)}
+        requirement={selectedRequirement}
+        allRequirements={mockRequirements}
+      />
     </Dialog>
   )
 }
