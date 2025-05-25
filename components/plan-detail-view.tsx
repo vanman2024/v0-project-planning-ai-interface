@@ -271,8 +271,8 @@ export function PlanDetailView({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="p-6 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {getStatusIcon(planItem.status)}
@@ -342,469 +342,515 @@ export function PlanDetailView({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid grid-cols-4 w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <TabsList className="px-6 grid grid-cols-4 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="relationships">Relationships</TabsTrigger>
             <TabsTrigger value="requirements">Requirements</TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 p-1">
-            <TabsContent value="details" className="mt-4 space-y-4">
-              {!isEditing ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Status & Priority</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Status:</span>
-                          <div className="flex items-center">
-                            {getStatusIcon(planItem.status)}
-                            <span className="ml-1 capitalize">{planItem.status}</span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Priority:</span>
-                          {getPriorityBadge(planItem.priority)}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Timing</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Start Date:</span>
-                          <span>{formatDate(planItem.startDate)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Due Date:</span>
-                          <span>{formatDate(planItem.dueDate)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Estimated Hours:</span>
-                          <span>{planItem.estimatedHours || "Not set"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Actual Hours:</span>
-                          <span>{planItem.actualHours || "Not set"}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Description</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="whitespace-pre-wrap">{planItem.description || "No description provided."}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Assignees</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {planItem.assignees && planItem.assignees.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {planItem.assignees.map((userId) => {
-                            const user = getUserById(userId)
-                            return (
-                              <div key={userId} className="flex items-center gap-2 p-2 border rounded-md">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                  <AvatarFallback>
-                                    {user.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="text-sm font-medium">{user.name}</div>
-                                  <div className="text-xs text-muted-foreground">{user.role}</div>
-                                </div>
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-[calc(90vh-10rem)]">
+              <div className="p-6 pt-4">
+                <TabsContent value="details" className="mt-0 space-y-4">
+                  {!isEditing ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Status & Priority</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Status:</span>
+                              <div className="flex items-center">
+                                {getStatusIcon(planItem.status)}
+                                <span className="ml-1 capitalize">{planItem.status}</span>
                               </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-muted-foreground">No assignees</div>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Priority:</span>
+                              {getPriorityBadge(planItem.priority)}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Timing</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Start Date:</span>
+                              <span>{formatDate(planItem.startDate)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Due Date:</span>
+                              <span>{formatDate(planItem.dueDate)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Estimated Hours:</span>
+                              <span>{planItem.estimatedHours || "Not set"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Actual Hours:</span>
+                              <span>{planItem.actualHours || "Not set"}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Description</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="whitespace-pre-wrap">{planItem.description || "No description provided."}</p>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Assignees</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {planItem.assignees && planItem.assignees.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {planItem.assignees.map((userId) => {
+                                const user = getUserById(userId)
+                                return (
+                                  <div key={userId} className="flex items-center gap-2 p-2 border rounded-md">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                                      <AvatarFallback>
+                                        {user.name
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="text-sm font-medium">{user.name}</div>
+                                      <div className="text-xs text-muted-foreground">{user.role}</div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground">No assignees</div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {planItem.tags && planItem.tags.length > 0 && (
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Tags</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                              {planItem.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
                       )}
-                    </CardContent>
-                  </Card>
 
-                  {planItem.tags && planItem.tags.length > 0 && (
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Tags</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {planItem.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={users[0].avatar || "/placeholder.svg"} alt={users[0].name} />
-                          <AvatarFallback>
-                            {users[0].name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="text-sm">
-                            <span className="font-medium">{users[0].name}</span> changed status from{" "}
-                            <span className="font-medium">Planned</span> to{" "}
-                            <span className="font-medium">In Progress</span>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Activity</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={users[0].avatar || "/placeholder.svg"} alt={users[0].name} />
+                              <AvatarFallback>
+                                {users[0].name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm">
+                                <span className="font-medium">{users[0].name}</span> changed status from{" "}
+                                <span className="font-medium">Planned</span> to{" "}
+                                <span className="font-medium">In Progress</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">Yesterday at 2:30 PM</div>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">Yesterday at 2:30 PM</div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={users[1].avatar || "/placeholder.svg"} alt={users[1].name} />
-                          <AvatarFallback>
-                            {users[1].name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="text-sm">
-                            <span className="font-medium">{users[1].name}</span> added a comment
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={users[1].avatar || "/placeholder.svg"} alt={users[1].name} />
+                              <AvatarFallback>
+                                {users[1].name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm">
+                                <span className="font-medium">{users[1].name}</span> added a comment
+                              </div>
+                              <div className="text-xs text-muted-foreground">2 days ago at 10:15 AM</div>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">2 days ago at 10:15 AM</div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={users[2].avatar || "/placeholder.svg"} alt={users[2].name} />
-                          <AvatarFallback>
-                            {users[2].name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="text-sm">
-                            <span className="font-medium">{users[2].name}</span> created this item
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={users[2].avatar || "/placeholder.svg"} alt={users[2].name} />
+                              <AvatarFallback>
+                                {users[2].name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm">
+                                <span className="font-medium">{users[2].name}</span> created this item
+                              </div>
+                              <div className="text-xs text-muted-foreground">3 days ago at 9:00 AM</div>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">3 days ago at 9:00 AM</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
-                // Edit mode
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                        </CardContent>
+                      </Card>
+                    </>
+                  ) : (
+                    // Edit mode
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          value={editedItem.name}
-                          onChange={(e) => handleChange("name", e.target.value)}
-                        />
-                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input
+                              id="name"
+                              value={editedItem.name}
+                              onChange={(e) => handleChange("name", e.target.value)}
+                            />
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select value={editedItem.status} onValueChange={(value) => handleChange("status", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="in-progress">In Progress</SelectItem>
-                            <SelectItem value="blocked">Blocked</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="status">Status</Label>
+                            <Select value={editedItem.status} onValueChange={(value) => handleChange("status", value)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="planned">Planned</SelectItem>
+                                <SelectItem value="in-progress">In Progress</SelectItem>
+                                <SelectItem value="blocked">Blocked</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="priority">Priority</Label>
-                        <Select value={editedItem.priority} onValueChange={(value) => handleChange("priority", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="startDate">Start Date</Label>
-                        <Input
-                          id="startDate"
-                          type="date"
-                          value={editedItem.startDate}
-                          onChange={(e) => handleChange("startDate", e.target.value)}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="dueDate">Due Date</Label>
-                        <Input
-                          id="dueDate"
-                          type="date"
-                          value={editedItem.dueDate}
-                          onChange={(e) => handleChange("dueDate", e.target.value)}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="estimatedHours">Est. Hours</Label>
-                          <Input
-                            id="estimatedHours"
-                            type="number"
-                            value={editedItem.estimatedHours || ""}
-                            onChange={(e) =>
-                              handleChange("estimatedHours", Number.parseInt(e.target.value) || undefined)
-                            }
-                          />
+                          <div className="space-y-2">
+                            <Label htmlFor="priority">Priority</Label>
+                            <Select
+                              value={editedItem.priority}
+                              onValueChange={(value) => handleChange("priority", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select priority" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="actualHours">Actual Hours</Label>
-                          <Input
-                            id="actualHours"
-                            type="number"
-                            value={editedItem.actualHours || ""}
-                            onChange={(e) => handleChange("actualHours", Number.parseInt(e.target.value) || undefined)}
-                          />
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="startDate">Start Date</Label>
+                            <Input
+                              id="startDate"
+                              type="date"
+                              value={editedItem.startDate}
+                              onChange={(e) => handleChange("startDate", e.target.value)}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="dueDate">Due Date</Label>
+                            <Input
+                              id="dueDate"
+                              type="date"
+                              value={editedItem.dueDate}
+                              onChange={(e) => handleChange("dueDate", e.target.value)}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                              <Label htmlFor="estimatedHours">Est. Hours</Label>
+                              <Input
+                                id="estimatedHours"
+                                type="number"
+                                value={editedItem.estimatedHours || ""}
+                                onChange={(e) =>
+                                  handleChange("estimatedHours", Number.parseInt(e.target.value) || undefined)
+                                }
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="actualHours">Actual Hours</Label>
+                              <Input
+                                id="actualHours"
+                                type="number"
+                                value={editedItem.actualHours || ""}
+                                onChange={(e) =>
+                                  handleChange("actualHours", Number.parseInt(e.target.value) || undefined)
+                                }
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      rows={5}
-                      value={editedItem.description}
-                      onChange={(e) => handleChange("description", e.target.value)}
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea
+                          id="description"
+                          rows={5}
+                          value={editedItem.description}
+                          onChange={(e) => handleChange("description", e.target.value)}
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>Assignees</Label>
-                    <div className="border rounded-md p-2">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {editedItem.assignees?.map((userId) => {
-                          const user = getUserById(userId)
-                          return (
-                            <div key={userId} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
-                              <span className="text-sm">{user.name}</span>
+                      <div className="space-y-2">
+                        <Label>Assignees</Label>
+                        <div className="border rounded-md p-2">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {editedItem.assignees?.map((userId) => {
+                              const user = getUserById(userId)
+                              return (
+                                <div key={userId} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
+                                  <span className="text-sm">{user.name}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => {
+                                      const newAssignees = editedItem.assignees?.filter((id) => id !== userId) || []
+                                      handleChange("assignees", newAssignees)
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <Select
+                            onValueChange={(value) => {
+                              const newAssignees = [...(editedItem.assignees || []), value]
+                              handleChange("assignees", newAssignees)
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Add assignee" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {users.map((user) => (
+                                <SelectItem
+                                  key={user.id}
+                                  value={user.id}
+                                  disabled={editedItem.assignees?.includes(user.id)}
+                                >
+                                  {user.name} ({user.role})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Tags</Label>
+                        <div className="flex flex-wrap gap-2 border rounded-md p-2">
+                          {editedItem.tags?.map((tag) => (
+                            <div key={tag} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
+                              <span className="text-sm">{tag}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-5 w-5 p-0"
                                 onClick={() => {
-                                  const newAssignees = editedItem.assignees?.filter((id) => id !== userId) || []
-                                  handleChange("assignees", newAssignees)
+                                  const newTags = editedItem.tags?.filter((t) => t !== tag) || []
+                                  handleChange("tags", newTags)
                                 }}
                               >
                                 <X className="h-3 w-3" />
                               </Button>
                             </div>
-                          )
-                        })}
-                      </div>
-                      <Select
-                        onValueChange={(value) => {
-                          const newAssignees = [...(editedItem.assignees || []), value]
-                          handleChange("assignees", newAssignees)
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add assignee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem
-                              key={user.id}
-                              value={user.id}
-                              disabled={editedItem.assignees?.includes(user.id)}
-                            >
-                              {user.name} ({user.role})
-                            </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Tags</Label>
-                    <div className="flex flex-wrap gap-2 border rounded-md p-2">
-                      {editedItem.tags?.map((tag) => (
-                        <div key={tag} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
-                          <span className="text-sm">{tag}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 w-5 p-0"
-                            onClick={() => {
-                              const newTags = editedItem.tags?.filter((t) => t !== tag) || []
-                              handleChange("tags", newTags)
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add tag"
+                              className="h-8"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && e.currentTarget.value) {
+                                  const newTag = e.currentTarget.value
+                                  const newTags = [...(editedItem.tags || []), newTag]
+                                  handleChange("tags", newTags)
+                                  e.currentTarget.value = ""
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add tag"
-                          className="h-8"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && e.currentTarget.value) {
-                              const newTag = e.currentTarget.value
-                              const newTags = [...(editedItem.tags || []), newTag]
-                              handleChange("tags", newTags)
-                              e.currentTarget.value = ""
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="relationships" className="mt-4 space-y-6">
-              {/* Parent-Child Relationships */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Hierarchy</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {parentItem && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Parent</h4>
-                      <div className="border rounded-md p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(parentItem.status)}
-                          <span>{parentItem.name}</span>
-                          <Badge variant="outline" className="ml-1 capitalize">
-                            {parentItem.type}
-                          </Badge>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <ArrowUp className="h-4 w-4" />
-                          View
-                        </Button>
                       </div>
                     </div>
                   )}
+                </TabsContent>
 
-                  {siblings.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Siblings ({siblings.length})</h4>
-                      <div className="space-y-2">
-                        {siblings.slice(0, 3).map((sibling) => (
-                          <div key={sibling.id} className="border rounded-md p-3 flex items-center justify-between">
+                <TabsContent value="relationships" className="mt-0 space-y-6">
+                  {/* Parent-Child Relationships */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Hierarchy</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {parentItem && (
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Parent</h4>
+                          <div className="border rounded-md p-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              {getStatusIcon(sibling.status)}
-                              <span>{sibling.name}</span>
+                              {getStatusIcon(parentItem.status)}
+                              <span>{parentItem.name}</span>
                               <Badge variant="outline" className="ml-1 capitalize">
-                                {sibling.type}
+                                {parentItem.type}
                               </Badge>
                             </div>
                             <Button variant="ghost" size="sm">
-                              <ArrowRight className="h-4 w-4" />
+                              <ArrowUp className="h-4 w-4" />
                               View
                             </Button>
                           </div>
-                        ))}
-                        {siblings.length > 3 && (
-                          <Button variant="outline" size="sm" className="w-full">
-                            View all {siblings.length} siblings
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                      )}
 
-                  {children.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Children ({children.length})</h4>
-                      <div className="space-y-2">
-                        {children.slice(0, 3).map((child) => (
-                          <div key={child.id} className="border rounded-md p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(child.status)}
-                              <span>{child.name}</span>
-                              <Badge variant="outline" className="ml-1 capitalize">
-                                {child.type}
-                              </Badge>
-                            </div>
-                            <Button variant="ghost" size="sm">
-                              <ArrowDown className="h-4 w-4" />
-                              View
-                            </Button>
+                      {siblings.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Siblings ({siblings.length})</h4>
+                          <div className="space-y-2">
+                            {siblings.slice(0, 3).map((sibling) => (
+                              <div key={sibling.id} className="border rounded-md p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(sibling.status)}
+                                  <span>{sibling.name}</span>
+                                  <Badge variant="outline" className="ml-1 capitalize">
+                                    {sibling.type}
+                                  </Badge>
+                                </div>
+                                <Button variant="ghost" size="sm">
+                                  <ArrowRight className="h-4 w-4" />
+                                  View
+                                </Button>
+                              </div>
+                            ))}
+                            {siblings.length > 3 && (
+                              <Button variant="outline" size="sm" className="w-full">
+                                View all {siblings.length} siblings
+                              </Button>
+                            )}
                           </div>
-                        ))}
-                        {children.length > 3 && (
-                          <Button variant="outline" size="sm" className="w-full">
-                            View all {children.length} children
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        </div>
+                      )}
 
-              {/* Dependencies */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Dependencies</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {dependencies.length > 0 ? (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">This item depends on:</h4>
-                      <div className="space-y-2">
-                        {dependencies.map(
-                          (dep) =>
-                            dep && (
+                      {children.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Children ({children.length})</h4>
+                          <div className="space-y-2">
+                            {children.slice(0, 3).map((child) => (
+                              <div key={child.id} className="border rounded-md p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(child.status)}
+                                  <span>{child.name}</span>
+                                  <Badge variant="outline" className="ml-1 capitalize">
+                                    {child.type}
+                                  </Badge>
+                                </div>
+                                <Button variant="ghost" size="sm">
+                                  <ArrowDown className="h-4 w-4" />
+                                  View
+                                </Button>
+                              </div>
+                            ))}
+                            {children.length > 3 && (
+                              <Button variant="outline" size="sm" className="w-full">
+                                View all {children.length} children
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Dependencies */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Dependencies</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {dependencies.length > 0 ? (
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">This item depends on:</h4>
+                          <div className="space-y-2">
+                            {dependencies.map(
+                              (dep) =>
+                                dep && (
+                                  <div key={dep.id} className="border rounded-md p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {getStatusIcon(dep.status)}
+                                      <span>{dep.name}</span>
+                                      <Badge variant="outline" className="ml-1 capitalize">
+                                        {dep.type}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                              <GitMerge className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Dependency relationship</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                      <Button variant="ghost" size="sm">
+                                        View
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ),
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-muted-foreground">No dependencies</div>
+                      )}
+
+                      {dependentItems.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Items that depend on this:</h4>
+                          <div className="space-y-2">
+                            {dependentItems.map((dep) => (
                               <div key={dep.id} className="border rounded-md p-3 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   {getStatusIcon(dep.status)}
@@ -818,11 +864,11 @@ export function PlanDetailView({
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                          <GitMerge className="h-4 w-4" />
+                                          <GitPullRequest className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p>Dependency relationship</p>
+                                        <p>Dependent relationship</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
@@ -831,260 +877,225 @@ export function PlanDetailView({
                                   </Button>
                                 </div>
                               </div>
-                            ),
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground">No dependencies</div>
-                  )}
-
-                  {dependentItems.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Items that depend on this:</h4>
-                      <div className="space-y-2">
-                        {dependentItems.map((dep) => (
-                          <div key={dep.id} className="border rounded-md p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(dep.status)}
-                              <span>{dep.name}</span>
-                              <Badge variant="outline" className="ml-1 capitalize">
-                                {dep.type}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                      <GitPullRequest className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Dependent relationship</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <Button variant="ghost" size="sm">
-                                View
-                              </Button>
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      )}
+
+                      <div className="pt-2">
+                        <Button variant="outline" size="sm">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Dependency
+                        </Button>
                       </div>
-                    </div>
-                  )}
+                    </CardContent>
+                  </Card>
 
-                  <div className="pt-2">
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Dependency
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Logical Order */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Logical Order</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-md p-4">
+                        <div className="flex flex-col items-center">
+                          {/* Visualization of the logical order */}
+                          <div className="flex flex-col items-center">
+                            {dependencies.length > 0 && (
+                              <>
+                                <div className="text-center mb-2">
+                                  <span className="text-sm font-medium">Dependencies</span>
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-2 mb-2">
+                                  {dependencies.map(
+                                    (dep) =>
+                                      dep && (
+                                        <Badge key={dep.id} variant="outline" className="flex items-center gap-1">
+                                          {getStatusIcon(dep.status)}
+                                          <span>{dep.name}</span>
+                                        </Badge>
+                                      ),
+                                  )}
+                                </div>
+                                <div className="h-8 w-px bg-border"></div>
+                              </>
+                            )}
 
-              {/* Logical Order */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Logical Order</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-md p-4">
-                    <div className="flex flex-col items-center">
-                      {/* Visualization of the logical order */}
-                      <div className="flex flex-col items-center">
-                        {dependencies.length > 0 && (
-                          <>
-                            <div className="text-center mb-2">
-                              <span className="text-sm font-medium">Dependencies</span>
+                            <div className="border-2 border-primary rounded-md px-4 py-2 my-2 text-center">
+                              <span className="font-medium">{planItem.name}</span>
                             </div>
-                            <div className="flex flex-wrap justify-center gap-2 mb-2">
-                              {dependencies.map(
-                                (dep) =>
-                                  dep && (
+
+                            {children.length > 0 && (
+                              <>
+                                <div className="h-8 w-px bg-border"></div>
+                                <div className="text-center mt-2 mb-2">
+                                  <span className="text-sm font-medium">Children</span>
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-2">
+                                  {children.map((child) => (
+                                    <Badge key={child.id} variant="outline" className="flex items-center gap-1">
+                                      {getStatusIcon(child.status)}
+                                      <span>{child.name}</span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+
+                            {dependentItems.length > 0 && (
+                              <>
+                                <div className="h-8 w-px bg-border"></div>
+                                <div className="text-center mt-2 mb-2">
+                                  <span className="text-sm font-medium">Dependent Items</span>
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-2">
+                                  {dependentItems.map((dep) => (
                                     <Badge key={dep.id} variant="outline" className="flex items-center gap-1">
                                       {getStatusIcon(dep.status)}
                                       <span>{dep.name}</span>
                                     </Badge>
-                                  ),
-                              )}
-                            </div>
-                            <div className="h-8 w-px bg-border"></div>
-                          </>
-                        )}
-
-                        <div className="border-2 border-primary rounded-md px-4 py-2 my-2 text-center">
-                          <span className="font-medium">{planItem.name}</span>
-                        </div>
-
-                        {children.length > 0 && (
-                          <>
-                            <div className="h-8 w-px bg-border"></div>
-                            <div className="text-center mt-2 mb-2">
-                              <span className="text-sm font-medium">Children</span>
-                            </div>
-                            <div className="flex flex-wrap justify-center gap-2">
-                              {children.map((child) => (
-                                <Badge key={child.id} variant="outline" className="flex items-center gap-1">
-                                  {getStatusIcon(child.status)}
-                                  <span>{child.name}</span>
-                                </Badge>
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        {dependentItems.length > 0 && (
-                          <>
-                            <div className="h-8 w-px bg-border"></div>
-                            <div className="text-center mt-2 mb-2">
-                              <span className="text-sm font-medium">Dependent Items</span>
-                            </div>
-                            <div className="flex flex-wrap justify-center gap-2">
-                              {dependentItems.map((dep) => (
-                                <Badge key={dep.id} variant="outline" className="flex items-center gap-1">
-                                  {getStatusIcon(dep.status)}
-                                  <span>{dep.name}</span>
-                                </Badge>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="requirements" className="mt-4 space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Linked Requirements</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {linkedRequirements.length > 0 ? (
-                    <div className="space-y-3">
-                      {linkedRequirements.map((req) => (
-                        <div key={req.id} className="border rounded-md p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <span className="font-medium">{req.title}</span>
-                              {getPriorityBadge(req.priority)}
-                              <Badge variant={req.status === "approved" ? "default" : "outline"}>{req.status}</Badge>
-                            </div>
-                            <Button variant="ghost" size="sm">
-                              <Link className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                          </div>
-                          <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                      <p>No requirements linked to this item</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Link Requirement
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Available Requirements</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {requirements
-                      .filter((req) => !planItem.requirements?.includes(req.id))
-                      .map((req) => (
-                        <div key={req.id} className="border rounded-md p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <span className="font-medium">{req.title}</span>
-                              {getPriorityBadge(req.priority)}
-                            </div>
-                            <Button variant="outline" size="sm">
-                              <Plus className="h-4 w-4 mr-1" />
-                              Link
-                            </Button>
-                          </div>
-                          <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="comments" className="mt-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    {planItem.comments && planItem.comments.length > 0 ? (
-                      planItem.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={comment.authorAvatar || "/placeholder.svg"} alt={comment.author} />
-                            <AvatarFallback>
-                              {comment.author
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium">{comment.author}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(comment.timestamp).toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="mt-1">{comment.content}</div>
-                            {comment.reactions && Object.keys(comment.reactions).length > 0 && (
-                              <div className="flex gap-1 mt-2">
-                                {Object.entries(comment.reactions).map(([reaction, count]) => (
-                                  <Badge key={reaction} variant="outline" className="text-xs">
-                                    {reaction} {count}
-                                  </Badge>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              </>
                             )}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                        <p>No comments yet</p>
                       </div>
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                  <Separator className="my-4" />
+                <TabsContent value="requirements" className="mt-0 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Linked Requirements</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {linkedRequirements.length > 0 ? (
+                        <div className="space-y-3">
+                          {linkedRequirements.map((req) => (
+                            <div key={req.id} className="border rounded-md p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-blue-500" />
+                                  <span className="font-medium">{req.title}</span>
+                                  {getPriorityBadge(req.priority)}
+                                  <Badge variant={req.status === "approved" ? "default" : "outline"}>
+                                    {req.status}
+                                  </Badge>
+                                </div>
+                                <Button variant="ghost" size="sm">
+                                  <Link className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                          <p>No requirements linked to this item</p>
+                          <Button variant="outline" size="sm" className="mt-2">
+                            <Plus className="h-4 w-4 mr-1" />
+                            Link Requirement
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                  <div className="space-y-2">
-                    <Textarea placeholder="Add a comment..." rows={3} />
-                    <div className="flex justify-end">
-                      <Button>
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Comment
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </ScrollArea>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Available Requirements</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {requirements
+                          .filter((req) => !planItem.requirements?.includes(req.id))
+                          .map((req) => (
+                            <div key={req.id} className="border rounded-md p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-blue-500" />
+                                  <span className="font-medium">{req.title}</span>
+                                  {getPriorityBadge(req.priority)}
+                                </div>
+                                <Button variant="outline" size="sm">
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Link
+                                </Button>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="comments" className="mt-0">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        {planItem.comments && planItem.comments.length > 0 ? (
+                          planItem.comments.map((comment) => (
+                            <div key={comment.id} className="flex gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={comment.authorAvatar || "/placeholder.svg"} alt={comment.author} />
+                                <AvatarFallback>
+                                  {comment.author
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="font-medium">{comment.author}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(comment.timestamp).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="mt-1">{comment.content}</div>
+                                {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                                  <div className="flex gap-1 mt-2">
+                                    {Object.entries(comment.reactions).map(([reaction, count]) => (
+                                      <Badge key={reaction} variant="outline" className="text-xs">
+                                        {reaction} {count}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                            <p>No comments yet</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator className="my-4" />
+
+                      <div className="space-y-2">
+                        <Textarea placeholder="Add a comment..." rows={3} />
+                        <div className="flex justify-end">
+                          <Button>
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Comment
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </div>
+            </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
