@@ -46,6 +46,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { RequirementDetailView } from "./requirement-detail-view"
 
 // Types for plan items
 export interface PlanItemDetail {
@@ -377,6 +378,8 @@ export function PlanDetailView({
   const [filterCategory, setFilterCategory] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [selectedRequirements, setSelectedRequirements] = useState<string[]>([])
+  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null)
+  const [isRequirementDetailOpen, setIsRequirementDetailOpen] = useState(false)
 
   useEffect(() => {
     if (planItem) {
@@ -1303,7 +1306,14 @@ export function PlanDetailView({
                       <div className="space-y-3">
                         {availableRequirements.length > 0 ? (
                           availableRequirements.map((req) => (
-                            <div key={req.id} className="border rounded-md p-3">
+                            <div
+                              key={req.id}
+                              className="border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors"
+                              onClick={() => {
+                                setSelectedRequirement(req)
+                                setIsRequirementDetailOpen(true)
+                              }}
+                            >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   {getRequirementStatusIcon(req.status)}
@@ -1402,6 +1412,13 @@ export function PlanDetailView({
             </ScrollArea>
           </div>
         </Tabs>
+        {/* Requirement Detail View */}
+        <RequirementDetailView
+          isOpen={isRequirementDetailOpen}
+          onClose={() => setIsRequirementDetailOpen(false)}
+          requirement={selectedRequirement}
+          allRequirements={requirements}
+        />
       </DialogContent>
     </Dialog>
   )
