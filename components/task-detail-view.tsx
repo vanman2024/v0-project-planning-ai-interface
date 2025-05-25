@@ -246,6 +246,7 @@ const getRequirementById = (id: string): Requirement => {
 
 // Helper function to get task item by ID
 const getTaskById = (id: string, allItems: TaskDetail[]): TaskDetail | undefined => {
+  if (!allItems) return undefined
   return allItems.find((item) => item.id === id)
 }
 
@@ -348,21 +349,26 @@ export function TaskDetailView({
 
   if (!task || !editedTask) return null
 
+  if (!allTasks) {
+    console.error("TaskDetailView: allTasks prop is undefined")
+    return null
+  }
+
   // Get direct children
-  const children = allTasks.filter((item) => item.parentId === task.id)
+  const children = allTasks?.filter((item) => item.parentId === task.id) || []
 
   // Get dependencies
   const dependencies = task.dependencies?.map((depId) => getTaskById(depId, allTasks)) || []
 
   // Get dependent items (items that depend on this one)
-  const dependentItems = allTasks.filter((item) => item.dependencies?.includes(task.id))
+  const dependentItems = allTasks?.filter((item) => item.dependencies?.includes(task.id)) || []
 
   // Get parent item
   const parentTask = task.parentId ? getTaskById(task.parentId, allTasks) : undefined
 
   // Get siblings (items with the same parent)
   const siblings = task.parentId
-    ? allTasks.filter((item) => item.parentId === task.parentId && item.id !== task.id)
+    ? allTasks?.filter((item) => item.parentId === task.parentId && item.id !== task.id) || []
     : []
 
   // Get requirements
