@@ -2,16 +2,12 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Card, Typography, Tabs, Tab } from "@material-tailwind/react"
-import {
-  ClockIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  BriefcaseIcon,
-  CalendarDaysIcon,
-  ListBulletIcon,
-} from "@heroicons/react/24/solid"
+import { Tabs } from "@/components/ui/tabs"
+import { Card } from "@/components/ui/card"
+import { ClockIcon } from "lucide-react"
 import { TaskDetailView, type TaskDetail } from "./task-detail-view"
+import { Typography } from "@material-tailwind/react"
+import { Tab } from "@material-tailwind/react"
 
 // Mock plan data
 const mockPlan = {
@@ -53,7 +49,7 @@ const mockRequirements = [
   },
 ]
 
-// Mock tasks data
+// Mock tasks data for testing
 const mockTasks: TaskDetail[] = [
   {
     id: "task1",
@@ -271,9 +267,12 @@ const PlanDetailView: React.FC = () => {
       {/* Task Detail View */}
       <TaskDetailView
         isOpen={isTaskDetailOpen}
-        onClose={() => setIsTaskDetailOpen(false)}
+        onClose={() => {
+          setIsTaskDetailOpen(false)
+          setSelectedTask(null)
+        }}
         task={selectedTask}
-        allTasks={mockTasks || []} // Ensure we always pass an array, even if empty
+        allTasks={mockTasks}
       />
     </div>
   )
