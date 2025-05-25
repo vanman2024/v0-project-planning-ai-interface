@@ -44,6 +44,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RequirementDetailView } from "./requirement-detail-view"
+import { TaskDetailView } from "./task-detail-view"
 
 // Types for plan items
 export interface PlanItemDetail {
@@ -377,6 +378,8 @@ export function PlanDetailView({
   const [selectedRequirements, setSelectedRequirements] = useState<string[]>([])
   const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null)
   const [isRequirementDetailOpen, setIsRequirementDetailOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<PlanItemDetail | null>(null)
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
 
   useEffect(() => {
     if (planItem) {
@@ -450,6 +453,11 @@ export function PlanDetailView({
     const newRequirements = selectedRequirements.filter((id) => id !== reqId)
     setSelectedRequirements(newRequirements)
     handleChange("requirements", newRequirements)
+  }
+
+  const handleTaskClick = (task: PlanItemDetail) => {
+    setSelectedTask(task)
+    setIsTaskDetailOpen(true)
   }
 
   return (
@@ -726,8 +734,7 @@ export function PlanDetailView({
                                     key={task.id}
                                     className="border rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50"
                                     onClick={() => {
-                                      // In a real implementation, this would open the task detail view
-                                      console.log("View task details:", task.id)
+                                      handleTaskClick(task)
                                     }}
                                   >
                                     <div className="flex items-center gap-2">
@@ -1407,6 +1414,16 @@ export function PlanDetailView({
           }}
           requirement={selectedRequirement}
           allRequirements={requirements}
+        />
+        {/* Task Detail View */}
+        <TaskDetailView
+          isOpen={isTaskDetailOpen}
+          onClose={() => {
+            setIsTaskDetailOpen(false)
+            setSelectedTask(null)
+          }}
+          task={selectedTask}
+          allTasks={allItems}
         />
       </DialogContent>
     </Dialog>
