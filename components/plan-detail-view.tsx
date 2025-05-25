@@ -271,7 +271,7 @@ export function PlanDetailView({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+      <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] p-0 flex flex-col">
         <DialogHeader className="p-6 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export function PlanDetailView({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <TabsList className="px-6 grid grid-cols-4 w-full">
+          <TabsList className="px-6 grid grid-cols-2 sm:grid-cols-4 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="relationships">Relationships</TabsTrigger>
             <TabsTrigger value="requirements">Requirements</TabsTrigger>
@@ -351,12 +351,12 @@ export function PlanDetailView({
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(90vh-10rem)]">
+            <ScrollArea className="h-[calc(90vh-10rem)] md:h-[calc(90vh-8rem)]">
               <div className="p-6 pt-4">
                 <TabsContent value="details" className="mt-0 space-y-4">
                   {!isEditing ? (
                     <>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
                           <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium">Status & Priority</CardTitle>
@@ -525,7 +525,7 @@ export function PlanDetailView({
                   ) : (
                     // Edit mode
                     <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="name">Name</Label>
@@ -726,10 +726,10 @@ export function PlanDetailView({
                         <div>
                           <h4 className="text-sm font-medium mb-2">Parent</h4>
                           <div className="border rounded-md p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               {getStatusIcon(parentItem.status)}
-                              <span>{parentItem.name}</span>
-                              <Badge variant="outline" className="ml-1 capitalize">
+                              <span className="line-clamp-1">{parentItem.name}</span>
+                              <Badge variant="outline" className="ml-1 capitalize hidden sm:inline-flex">
                                 {parentItem.type}
                               </Badge>
                             </div>
@@ -824,7 +824,7 @@ export function PlanDetailView({
                                       <TooltipProvider>
                                         <Tooltip>
                                           <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                            <Button variant="ghost" size="sm" className="h-9 w-9 sm:h-8 sm:w-8 p-0">
                                               <GitMerge className="h-4 w-4" />
                                             </Button>
                                           </TooltipTrigger>
@@ -863,7 +863,7 @@ export function PlanDetailView({
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <Button variant="ghost" size="sm" className="h-9 w-9 sm:h-8 sm:w-8 p-0">
                                           <GitPullRequest className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
@@ -897,8 +897,8 @@ export function PlanDetailView({
                       <CardTitle className="text-sm font-medium">Logical Order</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="border rounded-md p-4">
-                        <div className="flex flex-col items-center">
+                      <div className="border rounded-md p-2 sm:p-4">
+                        <div className="flex flex-col items-center max-w-full overflow-hidden">
                           {/* Visualization of the logical order */}
                           <div className="flex flex-col items-center">
                             {dependencies.length > 0 && (
@@ -975,16 +975,16 @@ export function PlanDetailView({
                         <div className="space-y-3">
                           {linkedRequirements.map((req) => (
                             <div key={req.id} className="border rounded-md p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-blue-500" />
-                                  <span className="font-medium">{req.title}</span>
-                                  {getPriorityBadge(req.priority)}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                  <span className="font-medium line-clamp-1">{req.title}</span>
+                                  <div className="hidden sm:block">{getPriorityBadge(req.priority)}</div>
                                   <Badge variant={req.status === "approved" ? "default" : "outline"}>
                                     {req.status}
                                   </Badge>
                                 </div>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="self-end sm:self-auto">
                                   <Link className="h-4 w-4 mr-1" />
                                   View
                                 </Button>
@@ -1052,9 +1052,9 @@ export function PlanDetailView({
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                   <div className="font-medium">{comment.author}</div>
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-xs text-muted-foreground mt-1 sm:mt-0">
                                     {new Date(comment.timestamp).toLocaleString()}
                                   </div>
                                 </div>
