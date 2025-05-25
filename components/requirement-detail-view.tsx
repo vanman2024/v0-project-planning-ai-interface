@@ -364,6 +364,47 @@ export function RequirementDetailView({
                           </div>
                         </CardContent>
                       </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Associated Tasks</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {requirement.linkedTasks && requirement.linkedTasks.length > 0 ? (
+                            <div className="space-y-2">
+                              {requirement.linkedTasks.map((taskId) => (
+                                <div
+                                  key={taskId}
+                                  className="border rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50"
+                                  onClick={() => {
+                                    // In a real implementation, this would open the task detail view
+                                    console.log("View task details:", taskId)
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <ClockIcon className="h-4 w-4 text-blue-500" />
+                                    <span className="font-medium">Task {taskId}</span>
+                                    <Badge variant="outline" className="ml-2">
+                                      In Progress
+                                    </Badge>
+                                  </div>
+                                  <Button variant="ghost" size="sm">
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 text-muted-foreground">
+                              <GitBranch className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                              <p>No tasks associated with this requirement</p>
+                              <Button variant="outline" size="sm" className="mt-2">
+                                <Plus className="h-4 w-4 mr-1" />
+                                Link Tasks
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
                     </>
                   ) : (
                     // Edit mode
