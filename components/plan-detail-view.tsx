@@ -271,4 +271,4 @@ const PlanDetailView: React.FC = () => {
   )
 }
 
-export default PlanDetailView
+export { PlanDetailView }
