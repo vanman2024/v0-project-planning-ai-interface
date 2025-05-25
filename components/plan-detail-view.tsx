@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Progress } from "@/components/ui/progress"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   FileText,
   Flag,
@@ -34,9 +36,16 @@ import {
   Circle,
   ClockIcon,
   ArrowUp,
+  ExternalLink,
+  Search,
+  LinkIcon,
+  Unlink,
+  FileCheck,
+  Info,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // Types for plan items
 export interface PlanItemDetail {
@@ -85,6 +94,13 @@ interface Requirement {
   description: string
   priority: "high" | "medium" | "low"
   status: "approved" | "pending" | "rejected"
+  category: "functional" | "non-functional" | "technical" | "business"
+  acceptanceCriteria?: string[]
+  linkedTasks?: string[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  completionPercentage?: number
 }
 
 // Mock data for users
@@ -100,7 +116,7 @@ const users: UserType[] = [
   { id: "user4", name: "Morgan Lee", avatar: "/placeholder.svg?height=40&width=40&query=ML", role: "QA Engineer" },
 ]
 
-// Mock data for requirements
+// Enhanced mock data for requirements with more details
 const requirements: Requirement[] = [
   {
     id: "req1",
@@ -108,6 +124,19 @@ const requirements: Requirement[] = [
     description: "System must support secure user authentication with email/password and social login options.",
     priority: "high",
     status: "approved",
+    category: "functional",
+    acceptanceCriteria: [
+      "Users can register with email and password",
+      "Password must meet security requirements (8+ chars, special chars)",
+      "Users can login with Google and GitHub OAuth",
+      "Session management with JWT tokens",
+      "Password reset functionality via email",
+    ],
+    linkedTasks: ["task1", "task2", "task5"],
+    createdBy: "user1",
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-20T14:30:00Z",
+    completionPercentage: 75,
   },
   {
     id: "req2",
@@ -115,6 +144,18 @@ const requirements: Requirement[] = [
     description: "All sensitive user data must be encrypted both in transit and at rest.",
     priority: "high",
     status: "approved",
+    category: "technical",
+    acceptanceCriteria: [
+      "Use AES-256 encryption for data at rest",
+      "Implement TLS 1.3 for all API communications",
+      "Encrypt PII fields in database",
+      "Secure key management system",
+    ],
+    linkedTasks: ["task3", "task4"],
+    createdBy: "user2",
+    createdAt: "2024-01-10T09:00:00Z",
+    updatedAt: "2024-01-18T11:00:00Z",
+    completionPercentage: 60,
   },
   {
     id: "req3",
@@ -122,6 +163,18 @@ const requirements: Requirement[] = [
     description: "All UI components must be fully responsive and work on mobile devices.",
     priority: "medium",
     status: "approved",
+    category: "non-functional",
+    acceptanceCriteria: [
+      "Support viewport sizes from 320px to 4K",
+      "Touch-friendly interface elements",
+      "Optimized images for different screen sizes",
+      "Progressive web app capabilities",
+    ],
+    linkedTasks: ["task6", "task7", "task8"],
+    createdBy: "user3",
+    createdAt: "2024-01-12T13:00:00Z",
+    updatedAt: "2024-01-22T16:00:00Z",
+    completionPercentage: 90,
   },
   {
     id: "req4",
@@ -129,6 +182,57 @@ const requirements: Requirement[] = [
     description: "System must load within 3 seconds on standard connections.",
     priority: "medium",
     status: "pending",
+    category: "non-functional",
+    acceptanceCriteria: [
+      "Initial page load under 3 seconds on 3G",
+      "Time to interactive under 5 seconds",
+      "Lighthouse performance score > 90",
+      "API response time < 200ms for 95th percentile",
+    ],
+    linkedTasks: ["task9"],
+    createdBy: "user2",
+    createdAt: "2024-01-20T10:00:00Z",
+    updatedAt: "2024-01-25T14:00:00Z",
+    completionPercentage: 30,
+  },
+  {
+    id: "req5",
+    title: "Multi-language Support",
+    description: "Application must support multiple languages for international users.",
+    priority: "low",
+    status: "pending",
+    category: "functional",
+    acceptanceCriteria: [
+      "Support for English, Spanish, French, and German",
+      "RTL language support for Arabic",
+      "Dynamic language switching",
+      "Localized date and number formats",
+    ],
+    linkedTasks: [],
+    createdBy: "user1",
+    createdAt: "2024-01-25T11:00:00Z",
+    updatedAt: "2024-01-25T11:00:00Z",
+    completionPercentage: 0,
+  },
+  {
+    id: "req6",
+    title: "Audit Logging",
+    description: "System must maintain comprehensive audit logs for all user actions.",
+    priority: "high",
+    status: "approved",
+    category: "business",
+    acceptanceCriteria: [
+      "Log all authentication events",
+      "Track data modifications with before/after values",
+      "Immutable log storage",
+      "Log retention for 7 years",
+      "Export logs in standard formats",
+    ],
+    linkedTasks: ["task10", "task11"],
+    createdBy: "user4",
+    createdAt: "2024-01-08T08:00:00Z",
+    updatedAt: "2024-01-15T10:00:00Z",
+    completionPercentage: 45,
   },
 ]
 
@@ -146,6 +250,10 @@ const getRequirementById = (id: string): Requirement => {
       description: "",
       priority: "medium",
       status: "pending",
+      category: "functional",
+      createdBy: "",
+      createdAt: "",
+      updatedAt: "",
     }
   )
 }
@@ -205,6 +313,52 @@ const getPriorityBadge = (priority: string) => {
   }
 }
 
+// Helper function to get requirement status icon
+const getRequirementStatusIcon = (status: string) => {
+  switch (status) {
+    case "approved":
+      return <FileCheck className="h-4 w-4 text-green-500" />
+    case "pending":
+      return <ClockIcon className="h-4 w-4 text-yellow-500" />
+    case "rejected":
+      return <X className="h-4 w-4 text-red-500" />
+    default:
+      return <FileText className="h-4 w-4 text-gray-400" />
+  }
+}
+
+// Helper function to get category badge
+const getCategoryBadge = (category: string) => {
+  switch (category) {
+    case "functional":
+      return (
+        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+          Functional
+        </Badge>
+      )
+    case "non-functional":
+      return (
+        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+          Non-Functional
+        </Badge>
+      )
+    case "technical":
+      return (
+        <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+          Technical
+        </Badge>
+      )
+    case "business":
+      return (
+        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+          Business
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">Other</Badge>
+  }
+}
+
 export function PlanDetailView({
   isOpen,
   onClose,
@@ -219,10 +373,15 @@ export function PlanDetailView({
   const [activeTab, setActiveTab] = useState("details")
   const [isEditing, setIsEditing] = useState(false)
   const [editedItem, setEditedItem] = useState<PlanItemDetail | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [selectedRequirements, setSelectedRequirements] = useState<string[]>([])
 
   useEffect(() => {
     if (planItem) {
       setEditedItem({ ...planItem })
+      setSelectedRequirements(planItem.requirements || [])
     }
   }, [planItem])
 
@@ -248,6 +407,18 @@ export function PlanDetailView({
   // Get requirements
   const linkedRequirements = planItem.requirements?.map((reqId) => getRequirementById(reqId)) || []
 
+  // Filter available requirements
+  const availableRequirements = requirements
+    .filter((req) => !planItem.requirements?.includes(req.id))
+    .filter((req) => {
+      const matchesSearch =
+        req.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        req.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = filterCategory === "all" || req.category === filterCategory
+      const matchesStatus = filterStatus === "all" || req.status === filterStatus
+      return matchesSearch && matchesCategory && matchesStatus
+    })
+
   const handleSave = () => {
     // In a real app, this would save to the backend
     setIsEditing(false)
@@ -267,6 +438,18 @@ export function PlanDetailView({
         [field]: value,
       })
     }
+  }
+
+  const handleLinkRequirement = (reqId: string) => {
+    const newRequirements = [...selectedRequirements, reqId]
+    setSelectedRequirements(newRequirements)
+    handleChange("requirements", newRequirements)
+  }
+
+  const handleUnlinkRequirement = (reqId: string) => {
+    const newRequirements = selectedRequirements.filter((id) => id !== reqId)
+    setSelectedRequirements(newRequirements)
+    handleChange("requirements", newRequirements)
   }
 
   return (
@@ -346,7 +529,14 @@ export function PlanDetailView({
           <TabsList className="px-6 grid grid-cols-2 sm:grid-cols-4 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="relationships">Relationships</TabsTrigger>
-            <TabsTrigger value="requirements">Requirements</TabsTrigger>
+            <TabsTrigger value="requirements" className="relative">
+              Requirements
+              {linkedRequirements.length > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 px-1">
+                  {linkedRequirements.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
 
@@ -966,70 +1156,185 @@ export function PlanDetailView({
                 </TabsContent>
 
                 <TabsContent value="requirements" className="mt-0 space-y-4">
+                  {/* Requirements Overview */}
+                  {linkedRequirements.length > 0 && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>Requirements Overview</AlertTitle>
+                      <AlertDescription>
+                        This {planItem.type} is linked to {linkedRequirements.length} requirement
+                        {linkedRequirements.length > 1 ? "s" : ""}. Overall completion:{" "}
+                        {Math.round(
+                          linkedRequirements.reduce((acc, req) => acc + (req.completionPercentage || 0), 0) /
+                            linkedRequirements.length,
+                        )}
+                        %
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Linked Requirements */}
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Linked Requirements</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Linked Requirements ({linkedRequirements.length})
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {linkedRequirements.length > 0 ? (
                         <div className="space-y-3">
                           {linkedRequirements.map((req) => (
-                            <div key={req.id} className="border rounded-md p-3">
+                            <div key={req.id} className="border rounded-md p-4 space-y-3">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                  <span className="font-medium line-clamp-1">{req.title}</span>
-                                  <div className="hidden sm:block">{getPriorityBadge(req.priority)}</div>
-                                  <Badge variant={req.status === "approved" ? "default" : "outline"}>
-                                    {req.status}
-                                  </Badge>
+                                  {getRequirementStatusIcon(req.status)}
+                                  <span className="font-medium">{req.title}</span>
+                                  {getPriorityBadge(req.priority)}
+                                  {getCategoryBadge(req.category)}
                                 </div>
-                                <Button variant="ghost" size="sm" className="self-end sm:self-auto">
-                                  <Link className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="ghost" size="sm" onClick={() => handleUnlinkRequirement(req.id)}>
+                                    <Unlink className="h-4 w-4 mr-1" />
+                                    Unlink
+                                  </Button>
+                                  <Button variant="ghost" size="sm">
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    View
+                                  </Button>
+                                </div>
                               </div>
-                              <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
+
+                              <p className="text-sm text-muted-foreground">{req.description}</p>
+
+                              {req.completionPercentage !== undefined && (
+                                <div className="space-y-1">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Completion</span>
+                                    <span className="font-medium">{req.completionPercentage}%</span>
+                                  </div>
+                                  <Progress value={req.completionPercentage} className="h-2" />
+                                </div>
+                              )}
+
+                              {req.acceptanceCriteria && req.acceptanceCriteria.length > 0 && (
+                                <div className="space-y-2">
+                                  <h5 className="text-sm font-medium">Acceptance Criteria:</h5>
+                                  <div className="space-y-1">
+                                    {req.acceptanceCriteria.map((criteria, index) => (
+                                      <div key={index} className="flex items-start gap-2">
+                                        <Checkbox className="mt-0.5" />
+                                        <span className="text-sm">{criteria}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span>Created by {getUserById(req.createdBy).name}</span>
+                                <span>•</span>
+                                <span>Updated {formatDate(req.updatedAt)}</span>
+                                {req.linkedTasks && req.linkedTasks.length > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{req.linkedTasks.length} linked tasks</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <div className="text-center py-6 text-muted-foreground">
                           <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                          <p>No requirements linked to this item</p>
-                          <Button variant="outline" size="sm" className="mt-2">
-                            <Plus className="h-4 w-4 mr-1" />
-                            Link Requirement
-                          </Button>
+                          <p>No requirements linked to this {planItem.type}</p>
+                          <p className="text-sm mt-1">Link requirements to track what needs to be implemented</p>
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
+                  {/* Available Requirements */}
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium">Available Requirements</CardTitle>
                     </CardHeader>
                     <CardContent>
+                      {/* Search and Filter */}
+                      <div className="space-y-3 mb-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search requirements..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <Select value={filterCategory} onValueChange={setFilterCategory}>
+                            <SelectTrigger className="w-[150px]">
+                              <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Categories</SelectItem>
+                              <SelectItem value="functional">Functional</SelectItem>
+                              <SelectItem value="non-functional">Non-Functional</SelectItem>
+                              <SelectItem value="technical">Technical</SelectItem>
+                              <SelectItem value="business">Business</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Select value={filterStatus} onValueChange={setFilterStatus}>
+                            <SelectTrigger className="w-[150px]">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Status</SelectItem>
+                              <SelectItem value="approved">Approved</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="rejected">Rejected</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
                       <div className="space-y-3">
-                        {requirements
-                          .filter((req) => !planItem.requirements?.includes(req.id))
-                          .map((req) => (
+                        {availableRequirements.length > 0 ? (
+                          availableRequirements.map((req) => (
                             <div key={req.id} className="border rounded-md p-3">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-blue-500" />
+                                  {getRequirementStatusIcon(req.status)}
                                   <span className="font-medium">{req.title}</span>
                                   {getPriorityBadge(req.priority)}
+                                  {getCategoryBadge(req.category)}
                                 </div>
-                                <Button variant="outline" size="sm">
-                                  <Plus className="h-4 w-4 mr-1" />
+                                <Button variant="outline" size="sm" onClick={() => handleLinkRequirement(req.id)}>
+                                  <LinkIcon className="h-4 w-4 mr-1" />
                                   Link
                                 </Button>
                               </div>
                               <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
+                              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                <span>Created by {getUserById(req.createdBy).name}</span>
+                                {req.linkedTasks && req.linkedTasks.length > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{req.linkedTasks.length} linked tasks</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          ))}
+                          ))
+                        ) : (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <Search className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                            <p>No requirements found</p>
+                            <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
