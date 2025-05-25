@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
-import { Tabs } from "@/components/ui/tabs"
-import { Card } from "@/components/ui/card"
-import { ClockIcon } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Clock, CheckCircle, AlertTriangle, Briefcase, CalendarDays, ListIcon as ListBullet } from "lucide-react"
 import { TaskDetailView, type TaskDetail } from "./task-detail-view"
-import { Typography } from "@material-tailwind/react"
-import { Tab } from "@material-tailwind/react"
 
 // Mock plan data
 const mockPlan = {
@@ -163,105 +162,99 @@ const PlanDetailView: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-8">
-      <Card className="p-6 shadow-md">
-        <Typography variant="h5" color="blue-gray" className="mb-4">
-          {mockPlan.name}
-        </Typography>
+      <Card className="shadow-md">
+        <CardContent className="p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">{mockPlan.name}</h2>
 
-        <Tabs value={activeTab} onChange={(value) => setActiveTab(value)}>
-          <Tab value="details" label="Details">
-            <div className="mt-6">
-              <Typography variant="h6" color="blue-gray">
-                Plan Overview
-              </Typography>
-              <Typography color="gray" className="mb-4">
-                {mockPlan.description}
-              </Typography>
+          <Tabs defaultValue="details" onValueChange={setActiveTab} value={activeTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="p-4">
-                  <div className="flex items-center mb-2">
-                    <CalendarDaysIcon className="h-5 w-5 mr-2 text-blue-gray-500" />
-                    <Typography variant="subtitle1" color="blue-gray">
-                      Timeline
-                    </Typography>
-                  </div>
-                  <Typography color="gray">
-                    {new Date(mockPlan.startDate).toLocaleDateString()} -{" "}
-                    {new Date(mockPlan.endDate).toLocaleDateString()}
-                  </Typography>
-                </Card>
+            <TabsContent value="details">
+              <div className="mt-6">
+                <h3 className="text-lg font-medium text-gray-700">Plan Overview</h3>
+                <p className="text-gray-600 mb-4">{mockPlan.description}</p>
 
-                <Card className="p-4">
-                  <div className="flex items-center mb-2">
-                    <BriefcaseIcon className="h-5 w-5 mr-2 text-blue-gray-500" />
-                    <Typography variant="subtitle1" color="blue-gray">
-                      Team
-                    </Typography>
-                  </div>
-                  <Typography color="gray">{mockPlan.team}</Typography>
-                </Card>
-              </div>
-
-              <Typography variant="h6" color="blue-gray" className="mt-6">
-                Associated Tasks
-              </Typography>
-              <div className="mt-2">
-                {associatedTasks.map((task) => (
-                  <Card
-                    key={task.id}
-                    className="border-l-4 hover:shadow-md transition-shadow cursor-pointer"
-                    style={{
-                      borderLeftColor:
-                        task.priority === "high" ? "#ef4444" : task.priority === "medium" ? "#f59e0b" : "#22c55e",
-                    }}
-                    onClick={() => handleTaskClick(task)}
-                  >
-                    <div className="flex items-center p-4">
-                      {task.status === "completed" ? (
-                        <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500" />
-                      ) : task.status === "in-progress" ? (
-                        <ClockIcon className="h-5 w-5 mr-2 text-blue-500" />
-                      ) : (
-                        <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-yellow-500" />
-                      )}
-                      <Typography variant="body1" color="blue-gray">
-                        {task.name}
-                      </Typography>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center mb-2">
+                        <CalendarDays className="h-5 w-5 mr-2 text-gray-500" />
+                        <span className="font-medium text-gray-700">Timeline</span>
+                      </div>
+                      <p className="text-gray-600">
+                        {new Date(mockPlan.startDate).toLocaleDateString()} -{" "}
+                        {new Date(mockPlan.endDate).toLocaleDateString()}
+                      </p>
+                    </CardContent>
                   </Card>
-                ))}
-              </div>
 
-              <Typography variant="h6" color="blue-gray" className="mt-6">
-                Requirements
-              </Typography>
-              <div className="mt-2">
-                {associatedRequirements.map((req) => (
-                  <Card key={req.id} className="p-4 mb-2">
-                    <div className="flex items-center mb-2">
-                      <ListBulletIcon className="h-5 w-5 mr-2 text-blue-gray-500" />
-                      <Typography variant="subtitle1" color="blue-gray">
-                        {req.name}
-                      </Typography>
-                    </div>
-                    <Typography color="gray">{req.description}</Typography>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center mb-2">
+                        <Briefcase className="h-5 w-5 mr-2 text-gray-500" />
+                        <span className="font-medium text-gray-700">Team</span>
+                      </div>
+                      <p className="text-gray-600">{mockPlan.team}</p>
+                    </CardContent>
                   </Card>
-                ))}
+                </div>
+
+                <h3 className="text-lg font-medium text-gray-700 mt-6">Associated Tasks</h3>
+                <div className="mt-2 space-y-2">
+                  {associatedTasks.map((task) => (
+                    <Card
+                      key={task.id}
+                      className="border-l-4 hover:shadow-md transition-shadow cursor-pointer"
+                      style={{
+                        borderLeftColor:
+                          task.priority === "high" ? "#ef4444" : task.priority === "medium" ? "#f59e0b" : "#22c55e",
+                      }}
+                      onClick={() => handleTaskClick(task)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center">
+                          {task.status === "completed" ? (
+                            <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+                          ) : task.status === "in-progress" ? (
+                            <Clock className="h-5 w-5 mr-2 text-blue-500" />
+                          ) : (
+                            <AlertTriangle className="h-5 w-5 mr-2 text-yellow-500" />
+                          )}
+                          <span className="text-gray-800">{task.name}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <h3 className="text-lg font-medium text-gray-700 mt-6">Requirements</h3>
+                <div className="mt-2 space-y-2">
+                  {associatedRequirements.map((req) => (
+                    <Card key={req.id} className="mb-2">
+                      <CardContent className="p-4">
+                        <div className="flex items-center mb-2">
+                          <ListBullet className="h-5 w-5 mr-2 text-gray-500" />
+                          <span className="font-medium text-gray-700">{req.name}</span>
+                        </div>
+                        <p className="text-gray-600">{req.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-            </div>
-          </Tab>
-          <Tab value="activity" label="Activity" className="ml-2">
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mt-6">
-                Recent Activity
-              </Typography>
-              <Typography color="gray" className="mb-4">
-                No recent activity to display.
-              </Typography>
-            </div>
-          </Tab>
-        </Tabs>
+            </TabsContent>
+
+            <TabsContent value="activity">
+              <div>
+                <h3 className="text-lg font-medium text-gray-700 mt-6">Recent Activity</h3>
+                <p className="text-gray-600 mb-4">No recent activity to display.</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
 
       {/* Task Detail View */}
