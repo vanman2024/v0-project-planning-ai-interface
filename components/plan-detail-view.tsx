@@ -1306,35 +1306,52 @@ export function PlanDetailView({
                       <div className="space-y-3">
                         {availableRequirements.length > 0 ? (
                           availableRequirements.map((req) => (
-                            <div
-                              key={req.id}
-                              className="border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors"
-                              onClick={() => {
-                                setSelectedRequirement(req)
-                                setIsRequirementDetailOpen(true)
-                              }}
-                            >
+                            <div key={req.id} className="border rounded-md p-3">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                                <div
+                                  className="flex items-center gap-2 flex-1 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    console.log("Requirement clicked:", req.id)
+                                    setSelectedRequirement(req)
+                                    setIsRequirementDetailOpen(true)
+                                  }}
+                                >
                                   {getRequirementStatusIcon(req.status)}
                                   <span className="font-medium">{req.title}</span>
                                   {getPriorityBadge(req.priority)}
                                   {getCategoryBadge(req.category)}
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleLinkRequirement(req.id)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleLinkRequirement(req.id)
+                                  }}
+                                >
                                   <LinkIcon className="h-4 w-4 mr-1" />
                                   Link
                                 </Button>
                               </div>
-                              <p className="mt-2 text-sm text-muted-foreground">{req.description}</p>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                <span>Created by {getUserById(req.createdBy).name}</span>
-                                {req.linkedTasks && req.linkedTasks.length > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <span>{req.linkedTasks.length} linked tasks</span>
-                                  </>
-                                )}
+                              <div
+                                className="mt-2 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedRequirement(req)
+                                  setIsRequirementDetailOpen(true)
+                                }}
+                              >
+                                <p className="text-sm text-muted-foreground">{req.description}</p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                  <span>Created by {getUserById(req.createdBy).name}</span>
+                                  {req.linkedTasks && req.linkedTasks.length > 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{req.linkedTasks.length} linked tasks</span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))
@@ -1415,7 +1432,10 @@ export function PlanDetailView({
         {/* Requirement Detail View */}
         <RequirementDetailView
           isOpen={isRequirementDetailOpen}
-          onClose={() => setIsRequirementDetailOpen(false)}
+          onClose={() => {
+            console.log("Closing requirement detail view")
+            setIsRequirementDetailOpen(false)
+          }}
           requirement={selectedRequirement}
           allRequirements={requirements}
         />

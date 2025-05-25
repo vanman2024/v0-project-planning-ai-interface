@@ -1,14 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,91 +11,41 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   FileText,
-  Flag,
-  Link,
-  MessageSquare,
-  MoreHorizontal,
-  Plus,
-  X,
-  CheckCircle2,
-  AlertCircle,
   Edit,
   Trash2,
   Check,
-  Clock,
+  X,
+  CheckCircle2,
+  ClockIcon,
+  MessageSquare,
+  LinkIcon,
   ExternalLink,
-  Paperclip,
-  Calendar,
-  Users,
-  Tag,
+  MoreHorizontal,
   GitBranch,
-  FileCheck,
-  Layers,
-  ArrowRight,
-  Unlink,
+  Info,
+  Plus,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Types
-export interface Requirement {
+interface Requirement {
   id: string
   title: string
   description: string
   priority: "high" | "medium" | "low"
   status: "approved" | "pending" | "rejected"
   category: "functional" | "non-functional" | "technical" | "business"
-  acceptanceCriteria: AcceptanceCriteria[]
-  linkedItems: LinkedItem[]
-  comments: Comment[]
-  attachments: Attachment[]
+  acceptanceCriteria?: string[]
+  linkedTasks?: string[]
   createdBy: string
   createdAt: string
   updatedAt: string
-  completionPercentage: number
-  assignees: string[]
-  tags: string[]
-  dueDate?: string
-  parentId?: string
-  children?: string[]
-}
-
-interface AcceptanceCriteria {
-  id: string
-  description: string
-  completed: boolean
-}
-
-interface LinkedItem {
-  id: string
-  type: "task" | "feature" | "plan" | "document"
-  title: string
-  status: "completed" | "in-progress" | "planned" | "blocked"
-}
-
-interface Comment {
-  id: string
-  author: string
-  authorAvatar?: string
-  content: string
-  timestamp: string
-  reactions?: { [key: string]: number }
-}
-
-interface Attachment {
-  id: string
-  name: string
-  type: string
-  size: number
-  url: string
-  uploadedBy: string
-  uploadedAt: string
+  completionPercentage?: number
 }
 
 interface UserType {
@@ -112,7 +55,7 @@ interface UserType {
   role: string
 }
 
-// Mock data for users
+// Mock data for users (if needed)
 const users: UserType[] = [
   {
     id: "user1",
@@ -140,34 +83,6 @@ const formatDate = (dateString?: string): string => {
   })
 }
 
-// Helper function to get status icon
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />
-    case "in-progress":
-      return <Clock className="h-4 w-4 text-blue-500" />
-    case "blocked":
-      return <AlertCircle className="h-4 w-4 text-red-500" />
-    default:
-      return <Clock className="h-4 w-4 text-gray-400" />
-  }
-}
-
-// Helper function to get requirement status icon
-const getRequirementStatusIcon = (status: string) => {
-  switch (status) {
-    case "approved":
-      return <FileCheck className="h-4 w-4 text-green-500" />
-    case "pending":
-      return <Clock className="h-4 w-4 text-yellow-500" />
-    case "rejected":
-      return <AlertCircle className="h-4 w-4 text-red-500" />
-    default:
-      return <FileText className="h-4 w-4 text-gray-400" />
-  }
-}
-
 // Helper function to get priority badge
 const getPriorityBadge = (priority: string) => {
   switch (priority) {
@@ -191,6 +106,20 @@ const getPriorityBadge = (priority: string) => {
       )
     default:
       return <Badge variant="outline">Unknown</Badge>
+  }
+}
+
+// Helper function to get requirement status icon
+const getRequirementStatusIcon = (status: string) => {
+  switch (status) {
+    case "approved":
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />
+    case "pending":
+      return <ClockIcon className="h-4 w-4 text-yellow-500" />
+    case "rejected":
+      return <X className="h-4 w-4 text-red-500" />
+    default:
+      return <FileText className="h-4 w-4 text-gray-400" />
   }
 }
 
@@ -226,25 +155,20 @@ const getCategoryBadge = (category: string) => {
   }
 }
 
-interface RequirementDetailViewProps {
-  isOpen: boolean
-  onClose: () => void
-  requirement: Requirement | null
-  allRequirements: Requirement[]
-  onUpdate?: (updatedRequirement: Requirement) => void
-}
-
 export function RequirementDetailView({
   isOpen,
   onClose,
   requirement,
   allRequirements,
-  onUpdate,
-}: RequirementDetailViewProps) {
+}: {
+  isOpen: boolean
+  onClose: () => void
+  requirement: Requirement | null
+  allRequirements: Requirement[]
+}) {
   const [activeTab, setActiveTab] = useState("details")
   const [isEditing, setIsEditing] = useState(false)
   const [editedRequirement, setEditedRequirement] = useState<Requirement | null>(null)
-  const [newComment, setNewComment] = useState("")
 
   // Initialize edited requirement when the requirement changes
   useState(() => {
@@ -255,26 +179,21 @@ export function RequirementDetailView({
 
   if (!requirement || !editedRequirement) return null
 
-  // Get child requirements
-  const childRequirements = allRequirements.filter((req) => req.parentId === requirement.id)
-
-  // Get parent requirement
-  const parentRequirement = requirement.parentId
-    ? allRequirements.find((req) => req.id === requirement.parentId)
-    : undefined
+  // Get related requirements (those with similar categories)
+  const relatedRequirements = allRequirements.filter(
+    (req) => req.id !== requirement.id && req.category === requirement.category,
+  )
 
   const handleSave = () => {
-    if (editedRequirement && onUpdate) {
-      onUpdate(editedRequirement)
-    }
+    // In a real app, this would save to the backend
     setIsEditing(false)
+    // Here we would update the requirement with the editedRequirement values
+    console.log("Saving changes:", editedRequirement)
   }
 
   const handleCancel = () => {
     setIsEditing(false)
-    if (requirement) {
-      setEditedRequirement({ ...requirement })
-    }
+    setEditedRequirement({ ...requirement })
   }
 
   const handleChange = (field: keyof Requirement, value: any) => {
@@ -286,38 +205,6 @@ export function RequirementDetailView({
     }
   }
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return
-
-    const comment: Comment = {
-      id: `comment-${Date.now()}`,
-      author: "Current User", // In a real app, this would be the current user
-      content: newComment,
-      timestamp: new Date().toISOString(),
-    }
-
-    if (editedRequirement) {
-      const updatedComments = [...editedRequirement.comments, comment]
-      handleChange("comments", updatedComments)
-      setNewComment("")
-    }
-  }
-
-  const toggleAcceptanceCriteria = (criteriaId: string, completed: boolean) => {
-    if (editedRequirement) {
-      const updatedCriteria = editedRequirement.acceptanceCriteria.map((criteria) =>
-        criteria.id === criteriaId ? { ...criteria, completed } : criteria,
-      )
-      handleChange("acceptanceCriteria", updatedCriteria)
-
-      // Update completion percentage
-      const completedCount = updatedCriteria.filter((criteria) => criteria.completed).length
-      const totalCount = updatedCriteria.length
-      const newPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-      handleChange("completionPercentage", newPercentage)
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] p-0 flex flex-col">
@@ -326,8 +213,8 @@ export function RequirementDetailView({
             <div className="flex items-center gap-2">
               {getRequirementStatusIcon(requirement.status)}
               <DialogTitle className="text-xl">{requirement.title}</DialogTitle>
-              {getCategoryBadge(requirement.category)}
               {getPriorityBadge(requirement.priority)}
+              {getCategoryBadge(requirement.category)}
             </div>
             <div className="flex items-center gap-2">
               {!isEditing ? (
@@ -344,15 +231,15 @@ export function RequirementDetailView({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>
-                        <Flag className="h-4 w-4 mr-2" />
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
                         Change Status
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <GitBranch className="h-4 w-4 mr-2" />
-                        Create Sub-Requirement
+                        Create Sub-requirement
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <Link className="h-4 w-4 mr-2" />
+                        <LinkIcon className="h-4 w-4 mr-2" />
                         Link to Task
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600">
@@ -377,41 +264,17 @@ export function RequirementDetailView({
             </div>
           </div>
           <DialogDescription>
-            {parentRequirement && (
-              <div className="text-sm text-muted-foreground mt-1">
-                <span className="font-medium">Path:</span> {parentRequirement.title} &gt; {requirement.title}
-              </div>
-            )}
+            <div className="text-sm text-muted-foreground mt-1">
+              Created by {getUserById(requirement.createdBy).name} on {formatDate(requirement.createdAt)}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <TabsList className="px-6 grid grid-cols-4 w-full">
+          <TabsList className="px-6 grid grid-cols-3 w-full">
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="linked-items">
-              Linked Items
-              {requirement.linkedItems.length > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 px-1">
-                  {requirement.linkedItems.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="comments">
-              Comments
-              {requirement.comments.length > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 px-1">
-                  {requirement.comments.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="attachments">
-              Attachments
-              {requirement.attachments.length > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 px-1">
-                  {requirement.attachments.length}
-                </Badge>
-              )}
-            </TabsTrigger>
+            <TabsTrigger value="acceptance">Acceptance Criteria</TabsTrigger>
+            <TabsTrigger value="related">Related Items</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
@@ -429,176 +292,78 @@ export function RequirementDetailView({
                         </CardContent>
                       </Card>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Dates
-                            </CardTitle>
+                            <CardTitle className="text-sm font-medium">Status & Priority</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-2">
                             <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Created:</span>
-                              <span className="text-sm">{formatDate(requirement.createdAt)}</span>
+                              <span className="text-sm text-muted-foreground">Status:</span>
+                              <div className="flex items-center">
+                                {getRequirementStatusIcon(requirement.status)}
+                                <span className="ml-1 capitalize">{requirement.status}</span>
+                              </div>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Updated:</span>
-                              <span className="text-sm">{formatDate(requirement.updatedAt)}</span>
+                              <span className="text-sm text-muted-foreground">Priority:</span>
+                              {getPriorityBadge(requirement.priority)}
                             </div>
-                            {requirement.dueDate && (
-                              <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Due:</span>
-                                <span className="text-sm">{formatDate(requirement.dueDate)}</span>
-                              </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Category:</span>
+                              {getCategoryBadge(requirement.category)}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Progress</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {requirement.completionPercentage !== undefined ? (
+                              <>
+                                <div className="flex justify-between">
+                                  <span className="text-sm text-muted-foreground">Completion:</span>
+                                  <span>{requirement.completionPercentage}%</span>
+                                </div>
+                                <Progress value={requirement.completionPercentage} className="h-2" />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>Not Started</span>
+                                  <span>In Progress</span>
+                                  <span>Complete</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-muted-foreground">No progress data available</div>
                             )}
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              People
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Created by:</span>
-                              <span className="text-sm">{getUserById(requirement.createdBy).name}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-muted-foreground">Assignees:</span>
-                              <div className="flex -space-x-2">
-                                {requirement.assignees.map((userId) => {
-                                  const user = getUserById(userId)
-                                  return (
-                                    <TooltipProvider key={userId}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Avatar className="h-6 w-6 border-2 border-background">
-                                            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                                            <AvatarFallback>
-                                              {user.name
-                                                .split(" ")
-                                                .map((n) => n[0])
-                                                .join("")}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>
-                                            {user.name} ({user.role})
-                                          </p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <Tag className="h-4 w-4" />
-                              Tags
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex flex-wrap gap-1">
-                              {requirement.tags.length > 0 ? (
-                                requirement.tags.map((tag) => (
-                                  <Badge key={tag} variant="secondary" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-sm text-muted-foreground">No tags</span>
-                              )}
-                            </div>
                           </CardContent>
                         </Card>
                       </div>
 
                       <Card>
                         <CardHeader className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-sm font-medium">Completion</CardTitle>
-                            <span className="text-sm font-medium">{requirement.completionPercentage}%</span>
+                          <CardTitle className="text-sm font-medium">Metadata</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Created By:</span>
+                            <span>{getUserById(requirement.createdBy).name}</span>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <Progress value={requirement.completionPercentage} className="h-2" />
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">Acceptance Criteria</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {requirement.acceptanceCriteria.length > 0 ? (
-                              requirement.acceptanceCriteria.map((criteria) => (
-                                <div key={criteria.id} className="flex items-start gap-2">
-                                  <Checkbox
-                                    id={criteria.id}
-                                    checked={criteria.completed}
-                                    onCheckedChange={(checked) =>
-                                      toggleAcceptanceCriteria(criteria.id, checked === true)
-                                    }
-                                    className="mt-0.5"
-                                  />
-                                  <label
-                                    htmlFor={criteria.id}
-                                    className={`text-sm ${
-                                      criteria.completed ? "line-through text-muted-foreground" : ""
-                                    }`}
-                                  >
-                                    {criteria.description}
-                                  </label>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="text-sm text-muted-foreground">No acceptance criteria defined</div>
-                            )}
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Created Date:</span>
+                            <span>{formatDate(requirement.createdAt)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Last Updated:</span>
+                            <span>{formatDate(requirement.updatedAt)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Linked Tasks:</span>
+                            <span>{requirement.linkedTasks?.length || 0}</span>
                           </div>
                         </CardContent>
                       </Card>
-
-                      {childRequirements.length > 0 && (
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                              <Layers className="h-4 w-4" />
-                              Sub-Requirements
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2">
-                              {childRequirements.map((childReq) => (
-                                <div
-                                  key={childReq.id}
-                                  className="flex items-center justify-between border rounded-md p-3"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {getRequirementStatusIcon(childReq.status)}
-                                    <span className="font-medium">{childReq.title}</span>
-                                    {getPriorityBadge(childReq.priority)}
-                                  </div>
-                                  <Button variant="ghost" size="sm">
-                                    <ArrowRight className="h-4 w-4 mr-1" />
-                                    View
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
                     </>
                   ) : (
                     // Edit mode
@@ -629,7 +394,7 @@ export function RequirementDetailView({
                             value={editedRequirement.status}
                             onValueChange={(value) => handleChange("status", value)}
                           >
-                            <SelectTrigger id="status">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -646,7 +411,7 @@ export function RequirementDetailView({
                             value={editedRequirement.priority}
                             onValueChange={(value) => handleChange("priority", value)}
                           >
-                            <SelectTrigger id="priority">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select priority" />
                             </SelectTrigger>
                             <SelectContent>
@@ -663,7 +428,7 @@ export function RequirementDetailView({
                             value={editedRequirement.category}
                             onValueChange={(value) => handleChange("category", value)}
                           >
-                            <SelectTrigger id="category">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
@@ -677,254 +442,217 @@ export function RequirementDetailView({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="dueDate">Due Date</Label>
-                        <Input
-                          id="dueDate"
-                          type="date"
-                          value={editedRequirement.dueDate?.split("T")[0] || ""}
-                          onChange={(e) =>
-                            handleChange("dueDate", e.target.value ? `${e.target.value}T00:00:00Z` : undefined)
-                          }
-                        />
+                        <Label htmlFor="completionPercentage">Completion Percentage</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="completionPercentage"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={editedRequirement.completionPercentage || 0}
+                            onChange={(e) => handleChange("completionPercentage", Number.parseInt(e.target.value) || 0)}
+                          />
+                          <span>%</span>
+                        </div>
                       </div>
+                    </div>
+                  )}
+                </TabsContent>
 
-                      <div className="space-y-2">
-                        <Label>Acceptance Criteria</Label>
-                        <div className="border rounded-md p-3 space-y-2">
-                          {editedRequirement.acceptanceCriteria.map((criteria, index) => (
-                            <div key={criteria.id} className="flex items-center gap-2">
-                              <Checkbox
-                                id={`edit-${criteria.id}`}
-                                checked={criteria.completed}
-                                onCheckedChange={(checked) => toggleAcceptanceCriteria(criteria.id, checked === true)}
-                              />
-                              <Input
-                                value={criteria.description}
-                                onChange={(e) => {
-                                  const updatedCriteria = [...editedRequirement.acceptanceCriteria]
-                                  updatedCriteria[index] = {
-                                    ...updatedCriteria[index],
-                                    description: e.target.value,
-                                  }
-                                  handleChange("acceptanceCriteria", updatedCriteria)
-                                }}
-                                className="flex-1"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => {
-                                  const updatedCriteria = editedRequirement.acceptanceCriteria.filter(
-                                    (_, i) => i !== index,
-                                  )
-                                  handleChange("acceptanceCriteria", updatedCriteria)
-                                }}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const newCriteria = {
-                                id: `criteria-${Date.now()}`,
-                                description: "",
-                                completed: false,
-                              }
-                              handleChange("acceptanceCriteria", [...editedRequirement.acceptanceCriteria, newCriteria])
-                            }}
-                          >
+                <TabsContent value="acceptance" className="mt-0 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-sm font-medium">Acceptance Criteria</CardTitle>
+                        {isEditing && (
+                          <Button variant="outline" size="sm">
                             <Plus className="h-4 w-4 mr-1" />
                             Add Criteria
                           </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {requirement.acceptanceCriteria && requirement.acceptanceCriteria.length > 0 ? (
+                        <div className="space-y-2">
+                          {requirement.acceptanceCriteria.map((criteria, index) => (
+                            <div key={index} className="flex items-start gap-2 p-2 border rounded-md">
+                              <Checkbox id={`criteria-${index}`} className="mt-0.5" />
+                              {!isEditing ? (
+                                <label
+                                  htmlFor={`criteria-${index}`}
+                                  className="text-sm leading-tight cursor-pointer flex-1"
+                                >
+                                  {criteria}
+                                </label>
+                              ) : (
+                                <div className="flex-1 flex items-center gap-2">
+                                  <Input
+                                    value={criteria}
+                                    onChange={(e) => {
+                                      const newCriteria = [...(editedRequirement.acceptanceCriteria || [])]
+                                      newCriteria[index] = e.target.value
+                                      handleChange("acceptanceCriteria", newCriteria)
+                                    }}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      const newCriteria = [...(editedRequirement.acceptanceCriteria || [])]
+                                      newCriteria.splice(index, 1)
+                                      handleChange("acceptanceCriteria", newCriteria)
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                          <p>No acceptance criteria defined</p>
+                          {isEditing && (
+                            <Button variant="outline" size="sm" className="mt-2">
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add First Criteria
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Verification Method</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2 p-2 border rounded-md">
+                          <Checkbox id="verification-1" className="mt-0.5" />
+                          <label htmlFor="verification-1" className="text-sm leading-tight cursor-pointer">
+                            Manual testing by QA team
+                          </label>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 border rounded-md">
+                          <Checkbox id="verification-2" className="mt-0.5" />
+                          <label htmlFor="verification-2" className="text-sm leading-tight cursor-pointer">
+                            Automated test coverage
+                          </label>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 border rounded-md">
+                          <Checkbox id="verification-3" className="mt-0.5" />
+                          <label htmlFor="verification-3" className="text-sm leading-tight cursor-pointer">
+                            User acceptance testing
+                          </label>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                      <div className="space-y-2">
-                        <Label>Tags</Label>
-                        <div className="flex flex-wrap gap-2 border rounded-md p-3">
-                          {editedRequirement.tags.map((tag, index) => (
-                            <div key={index} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
-                              <span className="text-sm">{tag}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0"
-                                onClick={() => {
-                                  const newTags = editedRequirement.tags.filter((_, i) => i !== index)
-                                  handleChange("tags", newTags)
-                                }}
-                              >
-                                <X className="h-3 w-3" />
+                <TabsContent value="related" className="mt-0 space-y-4">
+                  {/* Linked Tasks */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Linked Tasks ({requirement.linkedTasks?.length || 0})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {requirement.linkedTasks && requirement.linkedTasks.length > 0 ? (
+                        <div className="space-y-2">
+                          {requirement.linkedTasks.map((taskId) => (
+                            <div key={taskId} className="border rounded-md p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span>Task {taskId}</span>
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                View
                               </Button>
                             </div>
                           ))}
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Add tag"
-                              className="h-8"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && e.currentTarget.value) {
-                                  const newTag = e.currentTarget.value
-                                  handleChange("tags", [...editedRequirement.tags, newTag])
-                                  e.currentTarget.value = ""
-                                }
-                              }}
-                            />
-                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <GitBranch className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                          <p>No tasks linked to this requirement</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Related Requirements */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Related Requirements</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {relatedRequirements.length > 0 ? (
+                        <div className="space-y-2">
+                          {relatedRequirements.slice(0, 3).map((req) => (
+                            <div key={req.id} className="border rounded-md p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {getRequirementStatusIcon(req.status)}
+                                <span>{req.title}</span>
+                                {getPriorityBadge(req.priority)}
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          ))}
+                          {relatedRequirements.length > 3 && (
+                            <Button variant="outline" size="sm" className="w-full">
+                              View all {relatedRequirements.length} related requirements
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <Info className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                          <p>No related requirements found</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Comments */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Comments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-6 text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                        <p>No comments yet</p>
+                      </div>
+
+                      <Separator className="my-4" />
+
+                      <div className="space-y-2">
+                        <Textarea placeholder="Add a comment..." rows={3} />
+                        <div className="flex justify-end">
+                          <Button>
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Comment
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="linked-items" className="mt-0 space-y-4">
-                  {requirement.linkedItems.length > 0 ? (
-                    <div className="space-y-2">
-                      {requirement.linkedItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border rounded-md p-3">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(item.status)}
-                            <span className="font-medium">{item.title}</span>
-                            <Badge variant="outline" className="capitalize">
-                              {item.type}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Unlink className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <Link className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                      <p>No linked items</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Link Item
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="comments" className="mt-0 space-y-4">
-                  {requirement.comments.length > 0 ? (
-                    <div className="space-y-4">
-                      {requirement.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={comment.authorAvatar || "/placeholder.svg"} alt={comment.author} />
-                            <AvatarFallback>
-                              {comment.author
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                              <div className="font-medium">{comment.author}</div>
-                              <div className="text-xs text-muted-foreground mt-1 sm:mt-0">
-                                {new Date(comment.timestamp).toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="mt-1">{comment.content}</div>
-                            {comment.reactions && Object.keys(comment.reactions).length > 0 && (
-                              <div className="flex gap-1 mt-2">
-                                {Object.entries(comment.reactions).map(([reaction, count]) => (
-                                  <Badge key={reaction} variant="outline" className="text-xs">
-                                    {reaction} {count}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                      <p>No comments yet</p>
-                    </div>
-                  )}
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Add a comment..."
-                      rows={3}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Comment
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="attachments" className="mt-0 space-y-4">
-                  {requirement.attachments.length > 0 ? (
-                    <div className="space-y-2">
-                      {requirement.attachments.map((attachment) => (
-                        <div key={attachment.id} className="flex items-center justify-between border rounded-md p-3">
-                          <div className="flex items-center gap-2">
-                            <Paperclip className="h-4 w-4" />
-                            <span className="font-medium">{attachment.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {(attachment.size / 1024).toFixed(0)} KB
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <Paperclip className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                      <p>No attachments</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Attachment
-                      </Button>
-                    </div>
-                  )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </div>
             </ScrollArea>
           </div>
         </Tabs>
-
-        <DialogFooter className="p-6 pt-2">
-          <div className="w-full flex items-center justify-between text-xs text-muted-foreground">
-            <div>ID: {requirement.id}</div>
-            <div className="flex items-center gap-4">
-              <div>Created: {formatDate(requirement.createdAt)}</div>
-              <div>Updated: {formatDate(requirement.updatedAt)}</div>
-            </div>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
