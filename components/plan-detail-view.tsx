@@ -38,6 +38,7 @@ import {
   Unlink,
   FileCheck,
   Info,
+  ExternalLink,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -708,6 +709,71 @@ export function PlanDetailView({
                               <div className="text-xs text-muted-foreground">3 days ago at 9:00 AM</div>
                             </div>
                           </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Associated Tasks</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {children.filter((item) => item.type === "task").length > 0 ? (
+                            <div className="space-y-2">
+                              {children
+                                .filter((item) => item.type === "task")
+                                .map((task) => (
+                                  <div
+                                    key={task.id}
+                                    className="border rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50"
+                                    onClick={() => {
+                                      // In a real implementation, this would open the task detail view
+                                      console.log("View task details:", task.id)
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {getStatusIcon(task.status)}
+                                      <span className="font-medium">{task.name}</span>
+                                      {getPriorityBadge(task.priority)}
+                                      {task.assignees && task.assignees.length > 0 && (
+                                        <div className="flex -space-x-2 ml-2">
+                                          {task.assignees.slice(0, 3).map((userId) => {
+                                            const user = getUserById(userId)
+                                            return (
+                                              <Avatar key={userId} className="h-6 w-6 border-2 border-background">
+                                                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                                                <AvatarFallback>
+                                                  {user.name
+                                                    .split(" ")
+                                                    .map((n) => n[0])
+                                                    .join("")}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                            )
+                                          })}
+                                          {task.assignees.length > 3 && (
+                                            <Avatar className="h-6 w-6 border-2 border-background">
+                                              <AvatarFallback>+{task.assignees.length - 3}</AvatarFallback>
+                                            </Avatar>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Button variant="ghost" size="sm">
+                                      <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 text-muted-foreground">
+                              <GitBranch className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                              <p>No tasks associated with this {planItem.type}</p>
+                              <Button variant="outline" size="sm" className="mt-2">
+                                <Plus className="h-4 w-4 mr-1" />
+                                Create Task
+                              </Button>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </>
