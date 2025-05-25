@@ -35,8 +35,6 @@ import {
   Circle,
   ClockIcon,
   ArrowUp,
-  Search,
-  LinkIcon,
   Unlink,
   FileCheck,
   Info,
@@ -1177,9 +1175,7 @@ export function PlanDetailView({
                   {/* Linked Requirements */}
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Linked Requirements ({linkedRequirements.length})
-                      </CardTitle>
+                      <CardTitle className="text-sm font-medium">Requirements ({linkedRequirements.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {linkedRequirements.length > 0 ? (
@@ -1264,118 +1260,12 @@ export function PlanDetailView({
                         <div className="text-center py-6 text-muted-foreground">
                           <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
                           <p>No requirements linked to this {planItem.type}</p>
-                          <p className="text-sm mt-1">Link requirements from the available list below</p>
+                          <Button variant="outline" size="sm" className="mt-2">
+                            <Plus className="h-4 w-4 mr-1" />
+                            Link Requirements
+                          </Button>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Available Requirements */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Available Requirements</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Search and Filter */}
-                      <div className="space-y-3 mb-4">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search requirements..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                          />
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Select value={filterCategory} onValueChange={setFilterCategory}>
-                            <SelectTrigger className="w-[150px]">
-                              <SelectValue placeholder="Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Categories</SelectItem>
-                              <SelectItem value="functional">Functional</SelectItem>
-                              <SelectItem value="non-functional">Non-Functional</SelectItem>
-                              <SelectItem value="technical">Technical</SelectItem>
-                              <SelectItem value="business">Business</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          <Select value={filterStatus} onValueChange={setFilterStatus}>
-                            <SelectTrigger className="w-[150px]">
-                              <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Status</SelectItem>
-                              <SelectItem value="approved">Approved</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="rejected">Rejected</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        {availableRequirements.length > 0 ? (
-                          availableRequirements.map((req) => (
-                            <div key={req.id} className="border rounded-md p-3">
-                              <div className="flex items-center justify-between">
-                                <div
-                                  className="flex items-center gap-2 flex-1 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    console.log("Requirement clicked:", req.id)
-                                    setSelectedRequirement(req)
-                                    setIsRequirementDetailOpen(true)
-                                  }}
-                                >
-                                  {getRequirementStatusIcon(req.status)}
-                                  <span className="font-medium">{req.title}</span>
-                                  {getPriorityBadge(req.priority)}
-                                  {getCategoryBadge(req.category)}
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleLinkRequirement(req.id)
-                                  }}
-                                >
-                                  <LinkIcon className="h-4 w-4 mr-1" />
-                                  Link
-                                </Button>
-                              </div>
-                              <div
-                                className="mt-2 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedRequirement(req)
-                                  setIsRequirementDetailOpen(true)
-                                }}
-                              >
-                                <p className="text-sm text-muted-foreground">{req.description}</p>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                  <span>Created by {getUserById(req.createdBy).name}</span>
-                                  {req.linkedTasks && req.linkedTasks.length > 0 && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{req.linkedTasks.length} linked tasks</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-center py-6 text-muted-foreground">
-                            <Search className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                            <p>No requirements found</p>
-                            <p className="text-sm mt-1">Try adjusting your search or filters</p>
-                          </div>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
