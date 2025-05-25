@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   FileText,
   Flag,
@@ -36,7 +35,6 @@ import {
   Circle,
   ClockIcon,
   ArrowUp,
-  ExternalLink,
   Search,
   LinkIcon,
   Unlink,
@@ -1187,7 +1185,14 @@ export function PlanDetailView({
                       {linkedRequirements.length > 0 ? (
                         <div className="space-y-3">
                           {linkedRequirements.map((req) => (
-                            <div key={req.id} className="border rounded-md p-4 space-y-3">
+                            <div
+                              key={req.id}
+                              className="border rounded-md p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                              onClick={() => {
+                                setSelectedRequirement(req)
+                                setIsRequirementDetailOpen(true)
+                              }}
+                            >
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="flex flex-wrap items-center gap-2">
                                   {getRequirementStatusIcon(req.status)}
@@ -1196,13 +1201,16 @@ export function PlanDetailView({
                                   {getCategoryBadge(req.category)}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" onClick={() => handleUnlinkRequirement(req.id)}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleUnlinkRequirement(req.id)
+                                    }}
+                                  >
                                     <Unlink className="h-4 w-4 mr-1" />
                                     Unlink
-                                  </Button>
-                                  <Button variant="ghost" size="sm">
-                                    <ExternalLink className="h-4 w-4 mr-1" />
-                                    View
                                   </Button>
                                 </div>
                               </div>
@@ -1223,12 +1231,17 @@ export function PlanDetailView({
                                 <div className="space-y-2">
                                   <h5 className="text-sm font-medium">Acceptance Criteria:</h5>
                                   <div className="space-y-1">
-                                    {req.acceptanceCriteria.map((criteria, index) => (
+                                    {req.acceptanceCriteria.slice(0, 3).map((criteria, index) => (
                                       <div key={index} className="flex items-start gap-2">
-                                        <Checkbox className="mt-0.5" />
+                                        <CheckCircle2 className="h-3 w-3 mt-0.5 text-muted-foreground" />
                                         <span className="text-sm">{criteria}</span>
                                       </div>
                                     ))}
+                                    {req.acceptanceCriteria.length > 3 && (
+                                      <span className="text-xs text-muted-foreground ml-5">
+                                        +{req.acceptanceCriteria.length - 3} more criteria
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -1251,7 +1264,7 @@ export function PlanDetailView({
                         <div className="text-center py-6 text-muted-foreground">
                           <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
                           <p>No requirements linked to this {planItem.type}</p>
-                          <p className="text-sm mt-1">Link requirements to track what needs to be implemented</p>
+                          <p className="text-sm mt-1">Link requirements from the available list below</p>
                         </div>
                       )}
                     </CardContent>
