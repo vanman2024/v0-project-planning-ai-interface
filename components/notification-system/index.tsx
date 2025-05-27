@@ -7,14 +7,62 @@ import { Bell } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { NotificationItem, type Notification } from "./notification-item"
 
-interface NotificationSystemProps {
-  notifications: Notification[]
-  onMarkAsRead: (id: string) => void
-  onMarkAllAsRead: () => void
-}
+// Sample notifications data
+const initialNotifications: Notification[] = [
+  {
+    id: "1",
+    type: "error",
+    title: "Test failed",
+    description: "3 tests failed in integration suite",
+    timestamp: "2025-05-27T04:01:56.111Z",
+    status: "unread",
+    expandable: true,
+    details:
+      "The following tests failed:\nUserAuthTest.testInvalidCredentials,\nFeatureCardTest.testEmptyState,\nDashboardTest.testFilterByDate.\nCheck the CI logs for more details.",
+  },
+  {
+    id: "2",
+    type: "warning",
+    title: "Deployment pending",
+    description: "Waiting for approval to deploy",
+    timestamp: "2025-05-27T03:45:12.111Z",
+    status: "unread",
+    expandable: false,
+  },
+  {
+    id: "3",
+    type: "info",
+    title: "New AI suggestion",
+    description: "Optimization for your dashboard code",
+    timestamp: "2025-05-27T05:01:56.111Z",
+    status: "unread",
+    expandable: true,
+    details:
+      "We've analyzed your dashboard code and found potential optimizations that could improve performance by up to 35%. Consider implementing lazy loading for chart components and memoizing expensive calculations.",
+  },
+  {
+    id: "4",
+    type: "success",
+    title: "Build successful",
+    description: "feature-7001-dark-theme completed",
+    timestamp: "2025-05-27T04:41:56.111Z",
+    status: "unread",
+    expandable: false,
+  },
+  {
+    id: "5",
+    type: "info",
+    title: "Weekly report available",
+    description: "Your project performance summary is ready",
+    timestamp: "2025-05-26T14:30:00.000Z",
+    status: "read",
+    expandable: false,
+  },
+]
 
-export function NotificationSystem({ notifications, onMarkAsRead, onMarkAllAsRead }: NotificationSystemProps) {
+export function NotificationSystem() {
   const [isOpen, setIsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications)
   const [activeFilter, setActiveFilter] = useState("7d")
   const [expandedIds, setExpandedIds] = useState<string[]>([])
   const notificationRef = useRef<HTMLDivElement>(null)
@@ -34,6 +82,18 @@ export function NotificationSystem({ notifications, onMarkAsRead, onMarkAllAsRea
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, status: "read" as const } : notification,
+      ),
+    )
+  }
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, status: "read" as const })))
+  }
 
   const toggleNotification = (id: string) => {
     setExpandedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
@@ -78,7 +138,7 @@ export function NotificationSystem({ notifications, onMarkAsRead, onMarkAllAsRea
               <h3 className="font-medium">Notifications</h3>
               {unreadCount > 0 && <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>}
             </div>
-            <Button variant="ghost" size="sm" onClick={onMarkAllAsRead}>
+            <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead}>
               Mark all as read
             </Button>
           </div>
@@ -103,7 +163,7 @@ export function NotificationSystem({ notifications, onMarkAsRead, onMarkAllAsRea
                   notification={notification}
                   expanded={expandedIds.includes(notification.id)}
                   onToggle={() => toggleNotification(notification.id)}
-                  onMarkAsRead={() => onMarkAsRead(notification.id)}
+                  onMarkAsRead={() => handleMarkAsRead(notification.id)}
                 />
               ))
             )}

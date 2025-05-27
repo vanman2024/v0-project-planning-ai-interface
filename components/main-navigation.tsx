@@ -1,91 +1,81 @@
-import type React from "react"
-import Link from "next/link"
+"use client"
 
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
+import Link from "next/link"
 import { Icons } from "@/components/icons"
-import { MainNav } from "@/components/main-nav"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { NotificationSystem } from "./notification-system"
+import { siteConfig } from "@/config/site"
 
-interface Props extends React.HTMLAttributes<HTMLElement> {}
+interface MainNavigationProps {
+  currentView: string
+  onChangeView: (view: string) => void
+}
 
-export function SiteHeader({ className }: Props) {
+export function MainNavigation({ currentView, onChangeView }: MainNavigationProps) {
   return (
-    <div className={cn("border-b", className)}>
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              className="mr-2 px-0 text-base focus-visible:ring-0 focus-visible:ring-offset-0 lg:hidden"
-            >
-              <Icons.menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="pr-0">
-            <SheetHeader>
-              <SheetTitle>{siteConfig.name}</SheetTitle>
-              <SheetDescription>Feel free to look around.</SheetDescription>
-            </SheetHeader>
-            <MainNav className="mt-6" />
-            <div className="p-4 border-t">
-              <div className="flex items-center gap-3">
-                <NotificationSystem />
-                <Avatar>
-                  <AvatarImage src="/placeholder.svg?height=40&width=40&query=user" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">Jane Doe</p>
-                  <p className="text-xs text-muted-foreground">jane@example.com</p>
-                </div>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-        <Link href="/" className="mr-4 flex items-center space-x-2">
+    <div className="border-r w-64 h-full hidden md:block">
+      <div className="flex h-16 items-center border-b px-4">
+        <Link href="/" className="flex items-center space-x-2">
           <Icons.logo className="h-6 w-6" />
-          <span className="hidden font-bold sm:inline-block">{siteConfig.name}</span>
+          <span className="font-bold">{siteConfig.name}</span>
         </Link>
-        <MainNav className="mx-6 hidden lg:flex" />
-        <div className="flex items-center space-x-2">
-          <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40&query=user" alt="Avatar" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuSeparator />
-              <div className="p-4 border-t">
-                <div className="flex items-center gap-3">
-                  <NotificationSystem />
-                  <Avatar>
-                    <AvatarImage src="/placeholder.svg?height=40&width=40&query=user" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">Jane Doe</p>
-                    <p className="text-xs text-muted-foreground">jane@example.com</p>
-                  </div>
-                </div>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      </div>
+
+      <div className="px-4 py-6 space-y-6">
+        <nav className="space-y-1">
+          <Button
+            variant={currentView === "home" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("home")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Dashboard
+          </Button>
+          <Button
+            variant={currentView === "projects" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("projects")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Projects
+          </Button>
+          <Button
+            variant={currentView === "tasks" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("tasks")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Tasks
+          </Button>
+          <Button
+            variant={currentView === "chat" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("chat")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            AI Chat
+          </Button>
+        </nav>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 border-t p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src="/placeholder.svg?height=32&width=32&query=user" />
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">Jane Doe</p>
+              <p className="text-xs text-muted-foreground">jane@example.com</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <NotificationSystem />
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </div>
