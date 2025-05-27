@@ -3,10 +3,8 @@
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell } from "lucide-react"
+import { Bell, AlertCircle, CheckCircle, Clock, Zap, ChevronDown, ChevronUp, X } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { NotificationItem } from "./notification-item"
-import { useClickAway } from "../hooks/use-click-away"
 
 export type NotificationType = "error" | "warning" | "success" | "info"
 
@@ -33,7 +31,7 @@ export function NotificationSystem() {
       isRead: false,
       isExpanded: false,
       details:
-        "The following tests failed: UserAuthTest.testInvalidCredentials, FeatureCardTest.testEmptyState, DashboardTest.testFilterByDate. Check the CI logs for more details.",
+        "The following tests failed:\nUserAuthTest.testInvalidCredentials,\nFeatureCardTest.testEmptyState,\nDashboardTest.testFilterByDate.\nCheck the CI logs for more details.",
     },
     {
       id: "2",
@@ -65,8 +63,23 @@ export function NotificationSystem() {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
-  useClickAway(notificationRef, () => {
-    if (isOpen) setIsOpen(false)
+  // Close dropdown when clicking outside
+  const handleClickOutside = (e: MouseEvent) => {
+    if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+      setIsOpen(false)
+    }
+  }
+
+  // Add event listener for clicks outside
+  useState(() => {
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
   })
 
   const toggleNotification = (id: string) => {
@@ -92,12 +105,22 @@ export function NotificationSystem() {
   }
 
   const expandAll = () => {
-    setNotifications((prev) => prev.map((notification) => ({ ...notification, isExpanded: true })))
+    setNotifications((prev) =>
+      prev.map((notification) => (notification.details ? { ...notification, isExpanded: true } : notification)),
+    )
   }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleString()
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    })
   }
 
   // Filter notifications based on the selected time period
@@ -112,6 +135,19 @@ export function NotificationSystem() {
 
     return true
   })
+
+  const getIcon = (type: NotificationType) => {
+    switch (type) {
+      case "error":
+        return <AlertCircle className="h-5 w-5 text-red-500" />
+      case "warning":
+        return <Clock className="h-5 w-5 text-yellow-500" />
+      case "success":
+        return <CheckCircle className="h-5 w-5 text-green-500" />
+      case "info":
+        return <Zap className="h-5 w-5 text-blue-500" />
+    }
+  }
 
   return (
     <div className="relative" ref={notificationRef}>
@@ -151,12 +187,58 @@ export function NotificationSystem() {
               <div className="p-4 text-center text-muted-foreground">No notifications in this time period</div>
             ) : (
               filteredNotifications.map((notification) => (
-                <NotificationItem
+                <div
                   key={notification.id}
-                  notification={notification}
-                  onToggle={() => toggleNotification(notification.id)}
-                  onMarkAsRead={() => markAsRead(notification.id)}
-                />
+                  className={`border-b last:border-b-0 transition-colors ${
+                    notification.isRead ? "bg-white dark:bg-gray-900" : "bg-blue-50 dark:bg-blue-950"
+                  }`}
+                >
+                  <div className="p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5">{getIcon(notification.type)}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{notification.title}</h4>
+                            {!notification.isRead && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{notification.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.timestamp)}</p>
+
+                        {notification.details && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 h-6 px-2 text-xs"
+                            onClick={() => toggleNotification(notification.id)}
+                          >
+                            {notification.isExpanded ? (
+                              <ChevronUp className="h-3 w-3 mr-1" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                            )}
+                            {notification.isExpanded ? "Collapse" : "Mark as read"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {notification.details && notification.isExpanded && (
+                      <div className="mt-2 pl-8 pr-2 pb-2 text-sm border-t pt-2 bg-gray-50 dark:bg-gray-800 rounded">
+                        <p className="whitespace-pre-line">{notification.details}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))
             )}
           </div>

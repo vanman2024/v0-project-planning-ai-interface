@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, AlertTriangle, AlertCircle, Info, ChevronUp, ChevronDown } from "lucide-react"
+import { CheckCircle, AlertTriangle, AlertCircle, Info, ChevronUp, ChevronDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Notification } from "./notification-system"
 
@@ -53,18 +53,21 @@ export function NotificationItem({ notification, onToggle, onMarkAsRead }: Notif
                 <h4 className="font-medium">{notification.title}</h4>
                 {!notification.isRead && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
               </div>
-              {notification.details && (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
-                  {notification.isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              )}
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMarkAsRead}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">{notification.message}</p>
             <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.timestamp)}</p>
 
-            {!notification.isExpanded && notification.details && (
-              <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs" onClick={onMarkAsRead}>
-                Mark as read
+            {notification.details && (
+              <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-xs" onClick={onToggle}>
+                {notification.isExpanded ? (
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                ) : (
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                )}
+                {notification.isExpanded ? "Collapse" : "Mark as read"}
               </Button>
             )}
           </div>
@@ -73,11 +76,6 @@ export function NotificationItem({ notification, onToggle, onMarkAsRead }: Notif
         {notification.details && notification.isExpanded && (
           <div className="mt-2 pl-8 pr-2 pb-2 text-sm border-t pt-2 bg-gray-50 dark:bg-gray-800 rounded">
             <p className="whitespace-pre-line">{notification.details}</p>
-            <div className="flex justify-end mt-2">
-              <Button variant="outline" size="sm" onClick={onMarkAsRead}>
-                Mark as read
-              </Button>
-            </div>
           </div>
         )}
       </div>
