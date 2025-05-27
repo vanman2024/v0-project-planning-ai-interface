@@ -1,455 +1,346 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronRight, Check, Circle, Clock, List, Table2, Columns } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { PlanDetailView, type PlanItemDetail } from "./plan-detail-view"
-
-// Helper function to parse basic markdown
-const parseMarkdown = (text: string): string => {
-  // Handle bold text
-  const boldText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-  // Handle italic text
-  const italicText = boldText.replace(/\*(.*?)\*/g, "<em>$1</em>")
-  // Handle inline code
-  const codeText = italicText.replace(/`(.*?)`/g, '<code class="px-1 py-0.5 bg-muted rounded text-sm">$1</code>')
-
-  return codeText
-}
-
-interface PlanItem {
-  id: string
-  name: string
-  status: "completed" | "in-progress" | "planned"
-  type: "milestone" | "phase" | "module" | "feature" | "task"
-  children?: PlanItem[]
-  taskType?: "pre_build" | "feature" | "post_build"
-}
-
-// Convert PlanItem to PlanItemDetail
-const convertToPlanItemDetail = (item: PlanItem, parentId?: string): PlanItemDetail => {
-  return {
-    id: item.id,
-    name: item.name,
-    description: `This is a detailed description for ${item.name}. It includes information about the purpose, scope, and implementation details.`,
-    status: item.status,
-    type: item.type,
-    priority: ["high", "medium", "low"][Math.floor(Math.random() * 3)] as "high" | "medium" | "low",
-    assignees: item.status !== "planned" ? ["user1", "user2"] : [],
-    dueDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    startDate: new Date(Date.now() - Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    estimatedHours: Math.floor(Math.random() * 40) + 1,
-    actualHours: item.status === "completed" ? Math.floor(Math.random() * 40) + 1 : undefined,
-    tags: ["v1.0", "core", "sprint-3"],
-    dependencies: [],
-    children: item.children?.map((child) => child.id),
-    parentId,
-    taskType: item.taskType,
-    requirements: ["req1", "req2"],
-    comments:
-      item.status !== "planned"
-        ? [
-            {
-              id: `comment-${Math.random().toString(36).substring(7)}`,
-              author: "Alex Johnson",
-              authorAvatar: "/placeholder.svg?height=40&width=40&query=AJ",
-              content: `This ${item.type} is progressing well. We should be able to complete it on schedule.`,
-              timestamp: new Date(Date.now() - Math.random() * 5 * 24 * 60 * 60 * 1000).toISOString(),
-              reactions: { "👍": 2, "🎉": 1 },
-            },
-          ]
-        : [],
-    createdAt: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - Math.random() * 2 * 24 * 60 * 60 * 1000).toISOString(),
-    createdBy: "user1",
-  }
-}
-
-// Recursively convert the plan data to detailed items
-const convertPlanDataToDetailedItems = (item: PlanItem, parentId?: string): PlanItemDetail[] => {
-  const detailedItem = convertToPlanItemDetail(item, parentId)
-  let result = [detailedItem]
-
-  if (item.children) {
-    item.children.forEach((child) => {
-      result = [...result, ...convertPlanDataToDetailedItems(child, item.id)]
-    })
-  }
-
-  return result
-}
+import { Progress } from "@/components/ui/progress"
+import {
+  ChevronRight,
+  ChevronDown,
+  Target,
+  Package,
+  Layers,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Sparkles,
+  Calendar,
+  FileText,
+} from "lucide-react"
+import { PlanDetailView } from "./plan-detail-view"
+import { RequirementDetailView } from "./requirement-detail-view"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ProjectHealthScore } from "./project-health-score"
+import { QuickStatusUpdate } from "./quick-status-update"
+import { ProjectJourney } from "./project-journey"
+import { SmartSuggestions } from "./smart-suggestions"
 
 export function PlanViewer() {
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    "milestone-1": true,
-    "phase-1": true,
-    "module-1": true,
-    "feature-1": true,
-  })
-  const [activeView, setActiveView] = useState<"tree" | "table" | "kanban">("tree")
-  const [selectedItem, setSelectedItem] = useState<PlanItemDetail | null>(null)
-  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(["milestone-1"]))
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [selectedRequirement, setSelectedRequirement] = useState<any>(null)
 
-  const toggleItem = (id: string) => {
-    setExpandedItems((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
+  // Friendly type mapping
+  const typeConfig = {
+    milestone: {
+      icon: Target,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50 dark:bg-purple-950",
+      friendlyName: "Major Goal",
+      description: "A big achievement in your project",
+    },
+    phase: {
+      icon: Layers,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 dark:bg-blue-950",
+      friendlyName: "Project Stage",
+      description: "A major phase of work",
+    },
+    module: {
+      icon: Package,
+      color: "text-green-600",
+      bgColor: "bg-green-50 dark:bg-green-950",
+      friendlyName: "Work Package",
+      description: "A group of related features",
+    },
+    feature: {
+      icon: Sparkles,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50 dark:bg-orange-950",
+      friendlyName: "Feature",
+      description: "Something users can do",
+    },
+    task: {
+      icon: CheckCircle2,
+      color: "text-gray-600",
+      bgColor: "bg-gray-50 dark:bg-gray-950",
+      friendlyName: "To-Do",
+      description: "A specific task to complete",
+    },
   }
 
-  const planData: PlanItem = {
-    id: "milestone-1",
-    name: "Milestone: MVP Release",
+  // Sample data with friendly names
+  const planData = {
+    id: "root",
+    name: "Coffee Shop Mobile App",
+    type: "project",
     status: "in-progress",
-    type: "milestone",
+    progress: 35,
     children: [
       {
-        id: "phase-1",
-        name: "Phase: Backend Development",
+        id: "milestone-1",
+        name: "Launch MVP",
+        type: "milestone",
         status: "in-progress",
-        type: "phase",
+        progress: 45,
+        dueDate: "Dec 25, 2024",
+        description: "Get the first version live for customers",
         children: [
           {
-            id: "module-1",
-            name: "Module: Authentication",
-            status: "in-progress",
-            type: "module",
+            id: "phase-1",
+            name: "Foundation Setup",
+            type: "phase",
+            status: "completed",
+            progress: 100,
+            description: "Get all the basics in place",
             children: [
               {
-                id: "feature-1",
-                name: "Feature: User Registration",
+                id: "module-1",
+                name: "User Accounts",
+                type: "module",
                 status: "completed",
-                type: "feature",
+                progress: 100,
+                description: "Let people create accounts and log in",
                 children: [
                   {
-                    id: "task-1",
-                    name: "Task: DB Schema",
+                    id: "feature-1",
+                    name: "Sign Up Flow",
+                    type: "feature",
                     status: "completed",
-                    type: "task",
-                    taskType: "pre_build",
+                    progress: 100,
+                    description: "New users can create an account",
                   },
                   {
-                    id: "task-2",
-                    name: "Task: API Endpoint",
+                    id: "feature-2",
+                    name: "Login Screen",
+                    type: "feature",
                     status: "completed",
-                    type: "task",
-                    taskType: "feature",
-                  },
-                  {
-                    id: "task-3",
-                    name: "Task: Unit Tests",
-                    status: "completed",
-                    type: "task",
-                    taskType: "post_build",
+                    progress: 100,
+                    description: "Existing users can sign in",
                   },
                 ],
-              },
-              {
-                id: "feature-2",
-                name: "Feature: Login/Logout",
-                status: "in-progress",
-                type: "feature",
-                children: [
-                  {
-                    id: "task-4",
-                    name: "Task: Session Management",
-                    status: "in-progress",
-                    type: "task",
-                    taskType: "feature",
-                  },
-                ],
-              },
-              {
-                id: "feature-3",
-                name: "Feature: Password Reset",
-                status: "planned",
-                type: "feature",
               },
             ],
           },
           {
-            id: "module-2",
-            name: "Module: Product Management",
-            status: "planned",
-            type: "module",
-          },
-          {
-            id: "module-3",
-            name: "Module: Order Processing",
-            status: "planned",
-            type: "module",
+            id: "phase-2",
+            name: "Core Features",
+            type: "phase",
+            status: "in-progress",
+            progress: 60,
+            description: "Build the main app features",
+            children: [
+              {
+                id: "module-2",
+                name: "Menu & Ordering",
+                type: "module",
+                status: "in-progress",
+                progress: 75,
+                description: "Show coffee menu and take orders",
+                children: [
+                  {
+                    id: "feature-3",
+                    name: "Browse Menu",
+                    type: "feature",
+                    status: "completed",
+                    progress: 100,
+                    description: "See all available drinks and food",
+                  },
+                  {
+                    id: "feature-4",
+                    name: "Add to Cart",
+                    type: "feature",
+                    status: "in-progress",
+                    progress: 50,
+                    description: "Select items and customize them",
+                  },
+                ],
+              },
+            ],
           },
         ],
-      },
-      {
-        id: "phase-2",
-        name: "Phase: Frontend Development",
-        status: "planned",
-        type: "phase",
       },
     ],
   }
 
-  // Convert the hierarchical plan data to a flat array of detailed items
-  const allDetailedItems = convertPlanDataToDetailedItems(planData)
+  const toggleExpand = (itemId: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(itemId)) {
+      newExpanded.delete(itemId)
+    } else {
+      newExpanded.add(itemId)
+    }
+    setExpandedItems(newExpanded)
+  }
 
-  // Function to handle clicking on a plan item
-  const handlePlanItemClick = (item: PlanItem) => {
-    // Find the detailed version of the item
-    const detailedItem = allDetailedItems.find((detailedItem) => detailedItem.id === item.id)
-    if (detailedItem) {
-      setSelectedItem(detailedItem)
-      setIsDetailViewOpen(true)
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />
+      case "in-progress":
+        return <Clock className="w-4 h-4 text-blue-500" />
+      case "blocked":
+        return <AlertCircle className="w-4 h-4 text-red-500" />
+      default:
+        return <Clock className="w-4 h-4 text-gray-400" />
     }
   }
 
-  // Function to flatten the hierarchical data for table view
-  const flattenPlanData = (item: PlanItem, parentPath = ""): any[] => {
-    const currentPath = parentPath ? `${parentPath} > ${item.name}` : item.name
-    const result = [{ ...item, path: currentPath }]
-
-    if (item.children) {
-      item.children.forEach((child) => {
-        result.push(...flattenPlanData(child, currentPath))
-      })
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      completed: "Done! 🎉",
+      "in-progress": "Working on it 🚧",
+      pending: "Not started ⏳",
+      blocked: "Need help! 🚨",
     }
-
-    return result
+    return labels[status] || status
   }
 
-  const flatData = flattenPlanData(planData)
-
-  // Function to group tasks by status for Kanban view
-  const getKanbanData = () => {
-    const planned = flatData.filter((item) => item.status === "planned")
-    const inProgress = flatData.filter((item) => item.status === "in-progress")
-    const completed = flatData.filter((item) => item.status === "completed")
-
-    return { planned, inProgress, completed }
-  }
-
-  const kanbanData = getKanbanData()
-
-  const renderPlanItem = (item: PlanItem, depth = 0) => {
-    const isExpanded = expandedItems[item.id] || false
+  const renderPlanItem = (item: any, level = 0) => {
     const hasChildren = item.children && item.children.length > 0
+    const isExpanded = expandedItems.has(item.id)
+    const config = typeConfig[item.type as keyof typeof typeConfig]
 
-    const getStatusIcon = (status: string) => {
-      switch (status) {
-        case "completed":
-          return <Check className="h-4 w-4 text-green-500" />
-        case "in-progress":
-          return <Clock className="h-4 w-4 text-blue-500" />
-        default:
-          return <Circle className="h-4 w-4 text-gray-400" />
-      }
-    }
+    if (!config) return null
 
-    const getTaskTypeBadge = (taskType?: string) => {
-      if (!taskType) return null
-
-      switch (taskType) {
-        case "pre_build":
-          return (
-            <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
-              Pre-Build
-            </Badge>
-          )
-        case "feature":
-          return (
-            <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
-              Feature
-            </Badge>
-          )
-        case "post_build":
-          return (
-            <Badge variant="outline" className="ml-2 bg-purple-100 text-purple-800 border-purple-200">
-              Post-Build
-            </Badge>
-          )
-        default:
-          return null
-      }
-    }
+    const Icon = config.icon
 
     return (
-      <div key={item.id} className="ml-4" style={{ marginLeft: `${depth * 1.5}rem` }}>
-        <div
-          className="flex items-center py-2 cursor-pointer hover:bg-muted/50 rounded-md px-2"
-          onClick={(e) => {
-            if (hasChildren) {
-              toggleItem(item.id)
-            } else {
-              handlePlanItemClick(item)
-            }
-            e.stopPropagation()
-          }}
-          onDoubleClick={() => handlePlanItemClick(item)}
+      <div key={item.id} className={`${level > 0 ? "ml-6" : ""}`}>
+        <Card
+          className={`mb-3 hover:shadow-md transition-all cursor-pointer ${config.bgColor}`}
+          onClick={() => setSelectedItem(item)}
         >
-          {hasChildren && (
-            <div className="mr-1">
-              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </div>
-          )}
-          <div className="mr-2">{getStatusIcon(item.status)}</div>
-          <div className="flex-1 flex items-center">
-            <span className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-            {item.taskType && getTaskTypeBadge(item.taskType)}
-          </div>
-        </div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                {hasChildren && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleExpand(item.id)
+                    }}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                )}
 
-        {isExpanded && hasChildren && (
-          <div className="border-l border-muted ml-2 pl-2">
-            {item.children?.map((child) => renderPlanItem(child, depth + 1))}
-          </div>
+                <Icon className={`w-5 h-5 ${config.color}`} />
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{item.name}</h3>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="outline" className="text-xs">
+                            {config.friendlyName}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{config.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {item.description && <p className="text-sm text-muted-foreground mt-1">{item.description}</p>}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {item.dueDate && (
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {item.dueDate}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(item.status)}
+                  <span className="text-sm">{getStatusLabel(item.status)}</span>
+                </div>
+
+                {item.progress !== undefined && (
+                  <div className="flex items-center gap-2 min-w-[100px]">
+                    <Progress value={item.progress} className="h-2" />
+                    <span className="text-sm font-medium">{item.progress}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {hasChildren && isExpanded && (
+          <div className="mb-3">{item.children.map((child: any) => renderPlanItem(child, level + 1))}</div>
         )}
       </div>
     )
   }
 
-  return (
-    <>
-      <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle>Plan Structure</CardTitle>
-          <ToggleGroup type="single" value={activeView} onValueChange={(value) => setActiveView(value as any)}>
-            <ToggleGroupItem value="tree" aria-label="Tree View">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="table" aria-label="Table View">
-              <Table2 className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="kanban" aria-label="Kanban View">
-              <Columns className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </CardHeader>
-        <CardContent>
-          {activeView === "tree" && renderPlanItem(planData)}
+  if (selectedRequirement) {
+    return <RequirementDetailView requirement={selectedRequirement} onBack={() => setSelectedRequirement(null)} />
+  }
 
-          {activeView === "table" && (
-            <div className="overflow-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">Name</th>
-                    <th className="text-left py-2 px-4">Type</th>
-                    <th className="text-left py-2 px-4">Status</th>
-                    <th className="text-left py-2 px-4">Path</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {flatData.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b hover:bg-muted/50 cursor-pointer"
-                      onClick={() => handlePlanItemClick(item)}
-                    >
-                      <td className="py-2 px-4" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                      <td className="py-2 px-4 capitalize">{item.type}</td>
-                      <td className="py-2 px-4">
-                        <div className="flex items-center">
-                          {item.status === "completed" && <Check className="h-4 w-4 text-green-500 mr-2" />}
-                          {item.status === "in-progress" && <Clock className="h-4 w-4 text-blue-500 mr-2" />}
-                          {item.status === "planned" && <Circle className="h-4 w-4 text-gray-400 mr-2" />}
-                          <span className="capitalize">{item.status}</span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-4 text-sm text-muted-foreground">{item.path}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {activeView === "kanban" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium mb-3 flex items-center">
-                  <Circle className="h-4 w-4 text-gray-400 mr-2" />
-                  Planned ({kanbanData.planned.length})
-                </h3>
-                <div className="space-y-2">
-                  {kanbanData.planned.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => handlePlanItemClick(item)}
-                    >
-                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                      <div className="flex justify-between items-center mt-2">
-                        <Badge variant="outline" className="capitalize">
-                          {item.type}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{item.id}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium mb-3 flex items-center">
-                  <Clock className="h-4 w-4 text-blue-500 mr-2" />
-                  In Progress ({kanbanData.inProgress.length})
-                </h3>
-                <div className="space-y-2">
-                  {kanbanData.inProgress.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => handlePlanItemClick(item)}
-                    >
-                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                      <div className="flex justify-between items-center mt-2">
-                        <Badge variant="outline" className="capitalize">
-                          {item.type}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{item.id}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h3 className="font-medium mb-3 flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Completed ({kanbanData.completed.length})
-                </h3>
-                <div className="space-y-2">
-                  {kanbanData.completed.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border rounded-md p-3 bg-background shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => handlePlanItemClick(item)}
-                    >
-                      <div className="font-medium" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.name) }} />
-                      <div className="flex justify-between items-center mt-2">
-                        <Badge variant="outline" className="capitalize">
-                          {item.type}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{item.id}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Plan Detail View */}
+  if (selectedItem) {
+    return (
       <PlanDetailView
-        isOpen={isDetailViewOpen}
-        onClose={() => setIsDetailViewOpen(false)}
-        planItem={selectedItem}
-        allItems={allDetailedItems}
+        item={selectedItem}
+        onBack={() => setSelectedItem(null)}
+        onSelectRequirement={setSelectedRequirement}
+        onSelectTask={(task) => setSelectedItem({ ...task, progress: 50 })}
+        onSelectFeature={(feature) => setSelectedItem({ ...feature, progress: 75 })}
+        onSelectModule={(module) => setSelectedItem({ ...module, progress: 60 })}
       />
-    </>
+    )
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b">
+        <h2 className="text-2xl font-bold mb-2">Your Project Plan 🗺️</h2>
+        <p className="text-muted-foreground">Click on any item to see more details and manage your work</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <ProjectHealthScore />
+          <ProjectJourney />
+        </div>
+
+        <div className="mb-6">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-2">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold">{planData.name}</h3>
+                  <p className="text-muted-foreground">Overall Progress</p>
+                </div>
+                <div className="text-3xl font-bold text-blue-600">{planData.progress}%</div>
+              </div>
+              <Progress value={planData.progress} className="h-3" />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <QuickStatusUpdate
+            taskName="Landing Page Design"
+            onStatusUpdate={(status) => console.log(`Status updated: ${status}`)}
+          />
+          <SmartSuggestions />
+        </div>
+
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Project Breakdown
+          </h3>
+        </div>
+
+        {planData.children.map((child) => renderPlanItem(child))}
+      </div>
+    </div>
   )
 }
