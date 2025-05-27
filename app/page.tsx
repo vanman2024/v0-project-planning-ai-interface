@@ -6,11 +6,13 @@ import { ProjectsView } from "../components/projects-view"
 import { TasksView } from "../components/tasks-view"
 import { AgentChat } from "../components/agent-chat"
 import { PlanViewer } from "../components/plan-viewer"
+import { OnboardingTour } from "../components/onboarding-tour"
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("projects")
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false) // Changed to false to bypass onboarding
 
   const renderContent = () => {
     if (selectedProject) {
@@ -47,6 +49,11 @@ export default function Page() {
       setSelectedTask(null)
       return
     }
+  }
+
+  // Only show onboarding if state is true
+  if (showOnboarding) {
+    return <OnboardingTour onComplete={() => setShowOnboarding(false)} />
   }
 
   return (

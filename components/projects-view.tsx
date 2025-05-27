@@ -14,17 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ProjectCreationWizard } from "./project-creation-wizard"
 
 interface ProjectsViewProps {
   onSelectProject: (project: any) => void
@@ -33,8 +24,6 @@ interface ProjectsViewProps {
 export function ProjectsView({ onSelectProject }: ProjectsViewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [newProjectName, setNewProjectName] = useState("")
-  const [newProjectDescription, setNewProjectDescription] = useState("")
   const [activeTab, setActiveTab] = useState("all")
 
   // Sample projects data
@@ -110,12 +99,10 @@ export function ProjectsView({ onSelectProject }: ProjectsViewProps) {
     return matchesSearch
   })
 
-  const handleCreateProject = () => {
-    // In a real app, this would create a new project
-    console.log("Creating project:", { name: newProjectName, description: newProjectDescription })
+  const handleCreateProject = (projectData: any) => {
+    console.log("Project created:", projectData)
     setIsCreateDialogOpen(false)
-    setNewProjectName("")
-    setNewProjectDescription("")
+    // In a real app, this would create the project and add it to the list
   }
 
   return (
@@ -139,49 +126,24 @@ export function ProjectsView({ onSelectProject }: ProjectsViewProps) {
               />
             </div>
 
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  New Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Project</DialogTitle>
-                  <DialogDescription>Fill in the details below to create your new project.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="project-name">Project Name</Label>
-                    <Input
-                      id="project-name"
-                      placeholder="Enter project name"
-                      value={newProjectName}
-                      onChange={(e) => setNewProjectName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="project-description">Description</Label>
-                    <Input
-                      id="project-description"
-                      placeholder="What is this project about?"
-                      value={newProjectDescription}
-                      onChange={(e) => setNewProjectDescription(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateProject}>Create Project</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
           </div>
         </div>
       </div>
+
+      {isCreateDialogOpen && (
+        <ProjectCreationWizard
+          onComplete={(projectData) => {
+            console.log("Project created:", projectData)
+            setIsCreateDialogOpen(false)
+            // In a real app, this would add the new project to the projects list
+          }}
+          onCancel={() => setIsCreateDialogOpen(false)}
+        />
+      )}
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="border-b px-4">
