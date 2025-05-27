@@ -7,6 +7,7 @@ import { TasksView } from "../components/tasks-view"
 import { AgentChat } from "../components/agent-chat"
 import { PlanViewer } from "../components/plan-viewer"
 import { OnboardingTour } from "../components/onboarding-tour"
+import { NotificationButton } from "../components/notifications/notification-button"
 
 export default function Page() {
   const [currentView, setCurrentView] = useState("projects")
@@ -59,7 +60,12 @@ export default function Page() {
   return (
     <div className="flex h-screen overflow-hidden">
       <MainNavigation currentView={currentView} onChangeView={setCurrentView} />
-      <div className="flex-1 overflow-hidden">{renderContent()}</div>
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="border-b p-2 flex justify-end">
+          <NotificationButton />
+        </div>
+        <div className="flex-1 overflow-auto">{renderContent()}</div>
+      </div>
     </div>
   )
 }

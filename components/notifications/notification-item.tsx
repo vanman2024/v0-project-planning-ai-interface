@@ -2,7 +2,19 @@
 import { Button } from "@/components/ui/button"
 import { CheckCircle, AlertTriangle, AlertCircle, Info, ChevronUp, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Notification } from "./notification-system"
+
+export type NotificationType = "error" | "warning" | "success" | "info"
+
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  timestamp: string
+  type: NotificationType
+  isRead: boolean
+  isExpanded?: boolean
+  details?: string
+}
 
 interface NotificationItemProps {
   notification: Notification

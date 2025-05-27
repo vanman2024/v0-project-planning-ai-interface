@@ -1,6 +1,7 @@
 import type React from "react"
 import Link from "next/link"
 
+import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
@@ -33,7 +34,7 @@ export function SiteHeader({ className }: Props) {
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
             <SheetHeader>
-              <SheetTitle>Acme</SheetTitle>
+              <SheetTitle>{siteConfig.name}</SheetTitle>
               <SheetDescription>Feel free to look around.</SheetDescription>
             </SheetHeader>
             <MainNav className="mt-6" />
@@ -54,7 +55,7 @@ export function SiteHeader({ className }: Props) {
         </Sheet>
         <Link href="/" className="mr-4 flex items-center space-x-2">
           <Icons.logo className="h-6 w-6" />
-          <span className="hidden font-bold sm:inline-block">Acme</span>
+          <span className="hidden font-bold sm:inline-block">{siteConfig.name}</span>
         </Link>
         <MainNav className="mx-6 hidden lg:flex" />
         <div className="flex items-center space-x-2">
