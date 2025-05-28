@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Home, FolderKanban, MessageSquare, CheckSquare, Settings, Menu, X } from "lucide-react"
+import Link from "next/link"
+import { Icons } from "@/components/icons"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { NotificationSystem } from "./notification-system"
+import { siteConfig } from "@/config/site"
 
 interface MainNavigationProps {
   currentView: string
@@ -13,162 +14,68 @@ interface MainNavigationProps {
 }
 
 export function MainNavigation({ currentView, onChangeView }: MainNavigationProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  const navItems = [
-    {
-      name: "Home",
-      icon: Home,
-      view: "home",
-      description: "Dashboard & Overview",
-    },
-    {
-      name: "Projects",
-      icon: FolderKanban,
-      view: "projects",
-      description: "Manage Your Projects",
-    },
-    {
-      name: "Tasks",
-      icon: CheckSquare,
-      view: "tasks",
-      description: "Your To-Do List",
-    },
-    {
-      name: "AI Assistant",
-      icon: MessageSquare,
-      view: "chat",
-      description: "Get Help From AI",
-    },
-    {
-      name: "Settings",
-      icon: Settings,
-      view: "settings",
-      description: "Customize Your Experience",
-    },
-  ]
-
   return (
-    <>
-      {/* Desktop Navigation */}
-      <div className="hidden md:flex flex-col h-screen w-64 border-r bg-slate-50 dark:bg-slate-900">
-        <div className="p-4 border-b">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-blue-600">🧠</span> Project Planner
-          </h1>
-          <p className="text-sm text-muted-foreground">AI-Powered Project Management</p>
+    <div className="border-r w-64 h-full hidden md:block">
+      <div className="flex h-16 items-center border-b px-4 justify-between">
+        <Link href="/" className="flex items-center space-x-2">
+          <Icons.logo className="h-6 w-6" />
+          <span className="font-bold">{siteConfig.name}</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <NotificationSystem />
+          <ThemeToggle />
         </div>
+      </div>
 
-        <div className="flex-1 overflow-auto py-4">
-          <nav className="space-y-1 px-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.view}
-                  variant={currentView === item.view ? "default" : "ghost"}
-                  className={cn(
-                    "w-full justify-start text-left h-auto py-3",
-                    currentView === item.view ? "bg-blue-600 hover:bg-blue-700" : "",
-                  )}
-                  onClick={() => onChangeView(item.view)}
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  <div>
-                    <div>{item.name}</div>
-                    <div className="text-xs font-normal opacity-70">{item.description}</div>
-                  </div>
-                </Button>
-              )
-            })}
-          </nav>
-        </div>
+      <div className="px-4 py-6 space-y-6">
+        <nav className="space-y-1">
+          <Button
+            variant={currentView === "home" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("home")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Dashboard
+          </Button>
+          <Button
+            variant={currentView === "projects" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("projects")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Projects
+          </Button>
+          <Button
+            variant={currentView === "tasks" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("tasks")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            Tasks
+          </Button>
+          <Button
+            variant={currentView === "chat" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onChangeView("chat")}
+          >
+            <Icons.logo className="h-5 w-5 mr-2" />
+            AI Chat
+          </Button>
+        </nav>
+      </div>
 
-        <div className="p-4 border-t">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src="/placeholder.svg?height=40&width=40&query=user" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">Jane Doe</p>
-              <p className="text-xs text-muted-foreground">jane@example.com</p>
-            </div>
+      <div className="absolute bottom-0 left-0 right-0 border-t p-4">
+        <div className="flex items-center gap-2">
+          <Avatar>
+            <AvatarImage src="/placeholder.svg?height=32&width=32&query=user" />
+            <AvatarFallback>JD</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium">Jane Doe</p>
+            <p className="text-xs text-muted-foreground">jane@example.com</p>
           </div>
         </div>
       </div>
-
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-blue-600">🧠</span> Project Planner
-          </h1>
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="w-6 h-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0">
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                      <span className="text-blue-600">🧠</span> Project Planner
-                    </h2>
-                    <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">AI-Powered Project Management</p>
-                </div>
-
-                <div className="flex-1 overflow-auto py-4">
-                  <nav className="space-y-1 px-2">
-                    {navItems.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <Button
-                          key={item.view}
-                          variant={currentView === item.view ? "default" : "ghost"}
-                          className={cn(
-                            "w-full justify-start text-left h-auto py-3",
-                            currentView === item.view ? "bg-blue-600 hover:bg-blue-700" : "",
-                          )}
-                          onClick={() => {
-                            onChangeView(item.view)
-                            setIsMobileMenuOpen(false)
-                          }}
-                        >
-                          <Icon className="w-5 h-5 mr-3" />
-                          <div>
-                            <div>{item.name}</div>
-                            <div className="text-xs font-normal opacity-70">{item.description}</div>
-                          </div>
-                        </Button>
-                      )
-                    })}
-                  </nav>
-                </div>
-
-                <div className="p-4 border-t">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src="/placeholder.svg?height=40&width=40&query=user" />
-                      <AvatarFallback>JD</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">Jane Doe</p>
-                      <p className="text-xs text-muted-foreground">jane@example.com</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-    </>
+    </div>
   )
 }
