@@ -6,7 +6,7 @@ import { TasksView } from "../components/tasks-view"
 import { AgentChat } from "../components/agent-chat"
 import { PlanViewer } from "../components/plan-viewer"
 import { OnboardingTour } from "../components/onboarding-tour"
-import { NotificationSystem } from "../components/ui/notification-system"
+import { NotificationSystem } from "@/components/ui/notification-system"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Menu, Home, FolderKanban, CheckSquare, MessageSquare, Settings } from "lucide-react"
@@ -40,18 +40,6 @@ export default function Page() {
         return <div className="p-4">Settings</div>
       default:
         return <ProjectsView onSelectProject={(project) => setSelectedProject(project)} />
-    }
-  }
-
-  const handleBack = () => {
-    if (selectedProject) {
-      setSelectedProject(null)
-      return
-    }
-
-    if (selectedTask) {
-      setSelectedTask(null)
-      return
     }
   }
 

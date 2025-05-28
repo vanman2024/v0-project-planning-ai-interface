@@ -335,67 +335,65 @@ export function NotificationSystem() {
                   )}
                 </div>
               ) : (
-                <div>
-                  {filteredNotifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={cn(
-                        "border-b last:border-b-0 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800",
-                        notification.status === "unread" ? "bg-blue-50 dark:bg-blue-950" : "",
-                      )}
-                    >
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5">{getIcon(notification.type)}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">{notification.title}</h4>
-                                {notification.status === "unread" && (
-                                  <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                                )}
-                              </div>
-                              {notification.expandable && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => toggleNotification(notification.id)}
-                                >
-                                  {expandedIds.includes(notification.id) ? (
-                                    <ChevronUp className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">{notification.description}</p>
-                            <div className="flex items-center justify-between mt-2">
-                              <p className="text-xs text-muted-foreground">{formatDate(notification.timestamp)}</p>
+                filteredNotifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "border-b last:border-b-0 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800",
+                      notification.status === "unread" ? "bg-blue-50 dark:bg-blue-950" : "",
+                    )}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5">{getIcon(notification.type)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{notification.title}</h4>
                               {notification.status === "unread" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() => handleMarkAsRead(notification.id)}
-                                >
-                                  Mark as read
-                                </Button>
+                                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
                               )}
                             </div>
+                            {notification.expandable && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => toggleNotification(notification.id)}
+                              >
+                                {expandedIds.includes(notification.id) ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{notification.description}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-muted-foreground">{formatDate(notification.timestamp)}</p>
+                            {notification.status === "unread" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => handleMarkAsRead(notification.id)}
+                              >
+                                Mark as read
+                              </Button>
+                            )}
                           </div>
                         </div>
-
-                        {notification.expandable && expandedIds.includes(notification.id) && notification.details && (
-                          <div className="mt-2 ml-8 mr-2 p-3 text-sm bg-gray-50 dark:bg-gray-800 rounded-md">
-                            <p className="whitespace-pre-line">{notification.details}</p>
-                          </div>
-                        )}
                       </div>
+
+                      {notification.expandable && expandedIds.includes(notification.id) && notification.details && (
+                        <div className="mt-2 ml-8 mr-2 p-3 text-sm bg-gray-50 dark:bg-gray-800 rounded-md">
+                          <p className="whitespace-pre-line">{notification.details}</p>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </div>
 
